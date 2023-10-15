@@ -32,13 +32,11 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     fclose(outputFile);*/
 
-    BYTE test[2];
-    test[0] = sector[21];
-    test[1] = sector[20];
+    cout << LittleEndian_HexaToDecimal(sector, 8);
 
-    cout << test;
-
-    //sdfnkdsfnk
+    /*BYTE a = 0xF6;
+    cout << HexaToBinary(a) << endl;
+    cout << MFTEntry_Size(BinaryToDecimal(HexaToBinary(a))) << endl;*/
 
     return 0;
 }

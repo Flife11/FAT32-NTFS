@@ -1,4 +1,4 @@
-#include "function.h"
+﻿#include "function.h"
 
 
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
@@ -32,4 +32,57 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
     {
         printf("Success!\n");
     }
+}
+
+unsigned long long LittleEndian_HexaToDecimal(BYTE byteArr[], int length) {
+
+    unsigned long long result = 0;
+    //unsigned long long Pow = 0;
+
+    for (int i = 0; i < length; i++) {
+
+        result += (unsigned long long)byteArr[i] << (i * 8);
+
+        /*result += ((unsigned long long)byteArr[i] * pow(16, Pow));
+        Pow += 2;*/
+    }
+
+    /*VD: cho một số hệ hexa 4649 lưu ở little endian, muốn chuyển 49 sang hệ thập phân ta có thể dùng công thức 9*16^2 + 4*16^3 = 18688.
+    Tuy nhiên, nếu đổi 49 sang hệ thập phân trước, 49 = 9*16^0 + 4*16^1 = 73, rồi lấy 73 * 16^2 = 18688 (2^8 = 16^2)*/
+
+    return result;
+}
+
+string HexaToBinary(BYTE hexa) {
+
+    string binary = "";
+
+    while (hexa > 0) {
+        binary.insert(0, to_string(hexa % 2));
+        hexa /= 2;
+    }
+
+    return binary;
+}
+
+int BinaryToDecimal(string binary) {
+
+    int decimal = 0;
+
+    if (binary[0] == '1') {
+        decimal = -1;
+    }
+
+    for (int i = 0; i < binary.length(); i++) {
+        
+        decimal = (decimal * 2) + (binary[i] - '0');
+    }
+
+    return decimal;
+}
+
+int MFTEntry_Size(BYTE byte_40h_BPB) {
+    int decimal = abs(BinaryToDecimal(HexaToBinary(byte_40h_BPB)));
+
+    return (pow(2, decimal));
 }
