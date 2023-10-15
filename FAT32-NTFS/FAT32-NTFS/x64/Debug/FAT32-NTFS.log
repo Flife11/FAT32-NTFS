@@ -1,0 +1,5 @@
+﻿  function.cpp
+  main.cpp
+  Generating Code...
+C:\Users\this pc\source\repos\FAT32-NTFS\FAT32-NTFS\function.cpp(35): warning C4715: 'ReadSector': not all control paths return a value
+  FAT32-NTFS.vcxproj -> C:\Users\this pc\source\repos\FAT32-NTFS\x64\Debug\FAT32-NTFS.exe
