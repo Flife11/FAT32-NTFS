@@ -37,7 +37,6 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     test[1] = sector[20];
 
     cout << test;
-    //test
 
     return 0;
 }
