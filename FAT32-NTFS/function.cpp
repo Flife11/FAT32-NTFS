@@ -1,6 +1,7 @@
 ﻿#include "function.h"
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
+
 int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là byte.
 int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
 int NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
@@ -9,6 +10,9 @@ int NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
 
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
+
+
+
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
@@ -64,6 +68,16 @@ unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int
     return result;
 }
 
+string ByteArrToString(BYTE sector[], int startIndex, int length)
+{
+    string str = "";
+    for (int i = 0; i < length; ++i)
+    {
+        str += static_cast<char>(sector[i + startIndex]);
+    }
+    return str;
+}
+
 string HexaToBinary(BYTE hexa) {
 
     string binary = "";
@@ -92,16 +106,6 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
-string ByteArrToString(BYTE sector[], int startIndex, int length)
-{
-    string str = "";
-    for (int i = 0; i < length; ++i)
-    {
-        str += static_cast<char>(sector[i + startIndex]);
-    }
-    return str;
-}
-
 
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
@@ -114,5 +118,12 @@ int MFTEntry_Size(BYTE sector_VBR[]) {
     return (pow(2, decimal));
 }
 
+void Read_VBR(BYTE sector[]) {
+
+    NTFS_sector_size = LittleEndian_HexaToDecimal(sector, 11, 2);
+    NTFS_sector_per_cluster = LittleEndian_HexaToDecimal(sector, 13, 2);
+
+
+}
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------
