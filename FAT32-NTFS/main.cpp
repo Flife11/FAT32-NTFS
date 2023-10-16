@@ -7,11 +7,13 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     BYTE sector[512];
     const char* outputFileName = "sector_data.bin";
 
+    //MFT start:
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
     ReadSector(L"\\\\.\\F:", 0, sector);
-    cout << ByteArrToString(sector, 0,5);
-    
+
+    //cout << ByteArrToString(sector, 0,5); //success
+    //cout << MFTEntry_Size(sector); //sucess
     
     /*FILE* outputFile = fopen(outputFileName, "wb");
 
@@ -33,11 +35,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     fclose(outputFile);*/
 
-    cout << MFTEntry_Size(sector);
-
-    /*BYTE a = 0xF6;
-    cout << HexaToBinary(a) << endl;
-    cout << MFTEntry_Size(BinaryToDecimal(HexaToBinary(a))) << endl;*/
+    
 
     return 0;
 }

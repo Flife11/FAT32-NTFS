@@ -1,5 +1,15 @@
 ﻿#include "function.h"
 
+//-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
+int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là byte.
+int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
+int NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
+int NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
+int NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+
+
+//-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
+
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
