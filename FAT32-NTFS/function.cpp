@@ -106,6 +106,15 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
+void PrintHexa(BYTE sector[], int startIndex, int length) {
+
+    for (int i = 0; i < length; i++)
+    {
+        cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
+    }
+    cout << endl;
+}
+
 
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
@@ -120,10 +129,63 @@ int MFTEntry_Size(BYTE sector_VBR[]) {
 
 void Read_VBR(BYTE sector[]) {
 
-    NTFS_sector_size = LittleEndian_HexaToDecimal(sector, 11, 2);
-    NTFS_sector_per_cluster = LittleEndian_HexaToDecimal(sector, 13, 2);
+    cout << "Jump Instruction to bypass the DPB: ";
+    PrintHexa(sector, 0x00, 3);
 
+    cout << "Driver Sig: \"" << ByteArrToString(sector, 0x03, 8) << "\"" << endl;
 
+    NTFS_sector_size = LittleEndian_HexaToDecimal(sector, 0x0B, 2);
+    cout << "Bytes/Sector: " << NTFS_sector_size << endl;
+
+    NTFS_sector_per_cluster = LittleEndian_HexaToDecimal(sector, 0x0D, 1);
+    cout << "Sectors/Cluster: " << NTFS_sector_per_cluster << endl;
+    
+    cout << "Reserved Sectors: " << LittleEndian_HexaToDecimal(sector, 0x0E, 2) << endl;
+
+    cout << "# of FAT's: " << LittleEndian_HexaToDecimal(sector, 0x10, 1) << endl;
+
+    cout << "max. # of root dir entries: " << LittleEndian_HexaToDecimal(sector, 0x11, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "Media Descriptor: ";
+    PrintHexa(sector, 0x15, 1);
+
+    cout << "sectors/FAT: " << LittleEndian_HexaToDecimal(sector, 0x16, 2) << endl;
+
+    cout << "sectors/track: " << LittleEndian_HexaToDecimal(sector, 0x18, 2) << endl;
+
+    cout << "total heads: " << LittleEndian_HexaToDecimal(sector, 0x1A, 2) << endl;
+
+    cout << "Hidden sectors: " << LittleEndian_HexaToDecimal(sector, 0x1C, 4) << endl;
+
+    cout << "total sectors (partitions > 32MB): " << LittleEndian_HexaToDecimal(sector, 0x20, 4) << endl;
+
+    cout << "sectors/FAT: " << LittleEndian_HexaToDecimal(sector, 0x24, 4) << endl;
+
+    cout << "flags: " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+
+    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
 }
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------
