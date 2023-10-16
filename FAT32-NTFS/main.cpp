@@ -5,15 +5,15 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 {
 
     BYTE sector[512];
-    const char* outputFileName = "sector_data1.bin";
+    const char* outputFileName = "sector_data.bin";
 
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\F:", 3221225472, sector);
-    cout << ByteArrToString(sector, 5);
+    ReadSector(L"\\\\.\\F:", 0, sector);
+    cout << ByteArrToString(sector, 0,5);
     
     
-   /* FILE* outputFile = fopen(outputFileName, "wb");
+    /*FILE* outputFile = fopen(outputFileName, "wb");
 
     if (outputFile == NULL)
     {
@@ -33,6 +33,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     fclose(outputFile);*/
 
+    cout << MFTEntry_Size(sector);
 
     /*BYTE a = 0xF6;
     cout << HexaToBinary(a) << endl;

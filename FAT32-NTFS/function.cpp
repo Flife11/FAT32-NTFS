@@ -35,16 +35,16 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
     }
 }
 
-unsigned long long LittleEndian_HexaToDecimal(BYTE byteArr[], int length) {
+unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int length) {
 
     unsigned long long result = 0;
     //unsigned long long Pow = 0;
 
     for (int i = 0; i < length; i++) {
 
-        result += (unsigned long long)byteArr[i] << (i * 8);
+        result += (unsigned long long)sector[i+ startIndex] << (i * 8);
 
-        /*result += ((unsigned long long)byteArr[i] * pow(16, Pow));
+        /*result += ((unsigned long long)sector[i] * pow(16, Pow));
         Pow += 2;*/
     }
 
@@ -82,12 +82,12 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
-string ByteArrToString(BYTE byteArr[], int length)
+string ByteArrToString(BYTE sector[], int startIndex, int length)
 {
     string str = "";
     for (int i = 0; i < length; ++i)
     {
-        str += static_cast<char>(byteArr[i]);
+        str += static_cast<char>(sector[i + startIndex]);
     }
     return str;
 }
@@ -95,7 +95,10 @@ string ByteArrToString(BYTE byteArr[], int length)
 
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
-int MFTEntry_Size(BYTE byte_40h_BPB) {
+int MFTEntry_Size(BYTE sector_VBR[]) {
+
+    BYTE byte_40h_BPB = sector_VBR[64];
+
     int decimal = abs(BinaryToDecimal(HexaToBinary(byte_40h_BPB)));
 
     return (pow(2, decimal));

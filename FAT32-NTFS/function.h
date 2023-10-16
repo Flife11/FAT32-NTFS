@@ -19,33 +19,36 @@ using namespace std;
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]);
 
 /// <summary>
-/// Hàm để chuyển 1 chuỗi byte hexa (lưu ở little endian) sang decimal
+/// Hàm để chuyển 1 mảng con hexa (lưu ở little endian) sang decimal
 /// </summary>
-/// <param name="byteArr">: mảng chuỗi hexa (lưu ở little endian)</param>
-/// <param name="length">: độ dài chuỗi</param>
+/// <param name="sector">: mảng chứa dữ liệu của sector đã đọc (các byte hexa lưu ở little endian)</param>
+/// <param name="startIndex">: vị trí bắt đầu của mảng con</param>
+/// <param name="length">: độ dài mảng con muốn chuyển</param>
 /// <returns></returns>
-unsigned long long LittleEndian_HexaToDecimal(BYTE byteArr[], int length);
+unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int length);
+
 
 string HexaToBinary(BYTE hexa);
 int BinaryToDecimal(string binary);
 
 
 /// <summary>
-/// Hàm chuyển chuỗi BYTE thành chuỗi string (theo ASCII)
+/// Hàm chuyển 1 mảng con hexa thành chuỗi string (theo ASCII)
 /// </summary>
-/// <param name="byteArr">: chuỗi byte hexa</param>
-/// <param name="length">: độ dài chuỗi (số byte)</param>
+/// <param name="sector">: mảng chứa dữ liệu của sector đã đọc (các byte hexa lưu ở little endian)</param>
+/// <param name="startIndex">: vị trí bắt đầu của mảng con</param>
+/// <param name="length">: độ dài mảng con muốn chuyển</param>
 /// <returns></returns>
-string ByteArrToString(BYTE byteArr[], int length);
-
+string ByteArrToString(BYTE sector[], int startIndex, int length);
 
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
 /// Hàm để tính kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
 /// </summary>
-/// <param name="byte_40h_BPB">: giá trị hexa của 1 byte nằm ở vị trí 40h của bảng BPB.</param>
+/// <param name="sector_VBR">: mảng chứa dữ liệu của sector chứa VBR (Volume Boot Record)</param>
 /// <returns></returns>
-int MFTEntry_Size(BYTE byte_40h_BPB);
+int MFTEntry_Size(BYTE sector_VBR[]);
+
 
 //--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
