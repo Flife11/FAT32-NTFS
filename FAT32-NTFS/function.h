@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <iomanip>
 using namespace std;
 
 //--------------------------------------KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32)------------------------------------------
@@ -41,6 +42,14 @@ int BinaryToDecimal(string binary);
 /// <returns></returns>
 string ByteArrToString(BYTE sector[], int startIndex, int length);
 
+/// <summary>
+/// Hàm in ra màn hình 1 mảng con dưới dạng hexa trong mảng chứa dữ liệu của sector (có xuống dòng sau khi in)
+/// </summary>
+/// <param name="sector">: mảng chứa dữ liệu của sector đã đọc (các byte hexa lưu ở little endian)</param>
+/// <param name="startIndex">: vị trí bắt đầu của mảng con</param>
+/// <param name="length">: độ dài mảng con muốn in ra màn hình (số byte)</param>
+void PrintHexa(BYTE sector[], int startIndex, int length);
+
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
@@ -50,5 +59,10 @@ string ByteArrToString(BYTE sector[], int startIndex, int length);
 /// <returns></returns>
 int MFTEntry_Size(BYTE sector_VBR[]);
 
+/// <summary>
+/// Hàm đọc các thông tin được mô tả trong Partition Boot Sector (chỉ đối với NTFS)
+/// </summary>
+/// <param name="sector">mảng chứa dữ liệu của Partition Boot Sector (các byte hexa lưu ở little endian)</param>
+void Read_VBR(BYTE sector[]);
 
 //--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------

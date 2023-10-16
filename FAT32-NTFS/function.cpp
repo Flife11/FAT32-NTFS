@@ -1,14 +1,19 @@
 ﻿#include "function.h"
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
+
 int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là byte.
 int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
-int NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
-int NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
-int NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
+unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
+unsigned long long NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
 
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
+
+
+
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
@@ -64,6 +69,16 @@ unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int
     return result;
 }
 
+string ByteArrToString(BYTE sector[], int startIndex, int length)
+{
+    string str = "";
+    for (int i = 0; i < length; ++i)
+    {
+        str += static_cast<char>(sector[i + startIndex]);
+    }
+    return str;
+}
+
 string HexaToBinary(BYTE hexa) {
 
     string binary = "";
@@ -92,14 +107,13 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
-string ByteArrToString(BYTE sector[], int startIndex, int length)
-{
-    string str = "";
-    for (int i = 0; i < length; ++i)
+void PrintHexa(BYTE sector[], int startIndex, int length) {
+
+    for (int i = 0; i < length; i++)
     {
-        str += static_cast<char>(sector[i + startIndex]);
+        cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
     }
-    return str;
+    cout << dec << endl;
 }
 
 
@@ -112,6 +126,81 @@ int MFTEntry_Size(BYTE sector_VBR[]) {
     int decimal = abs(BinaryToDecimal(HexaToBinary(byte_40h_BPB)));
 
     return (pow(2, decimal));
+}
+
+void Read_VBR(BYTE sector[]) {
+
+    cout << "********************* [VBR - VOLUME BOOT RECORD] *********************" << endl;
+
+    cout << "Jump Instruction: ";
+    PrintHexa(sector, 0x00, 3);
+
+    cout << "OEM ID: \"" << ByteArrToString(sector, 0x03, 8) << "\"" << endl;
+
+    cout << "-------------- BPB - BIOS parameter block --------------" << endl;
+
+    NTFS_sector_size = LittleEndian_HexaToDecimal(sector, 0x0B, 2);
+    cout << "Bytes/Sector: " << NTFS_sector_size << endl;
+
+    NTFS_sector_per_cluster = LittleEndian_HexaToDecimal(sector, 0x0D, 1);
+    cout << "Sectors/Cluster: " << NTFS_sector_per_cluster << endl;
+    
+    cout << "Reserved Sectors: " << LittleEndian_HexaToDecimal(sector, 0x0E, 2) << endl;
+
+    cout << "always 0: ";
+    PrintHexa(sector, 0x10, 3);
+
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x13, 2);
+
+    cout << "Media Descriptor: " << LittleEndian_HexaToDecimal(sector, 0x15, 1) << endl;
+
+    cout << "always 0: ";
+    PrintHexa(sector, 0x16, 2);
+
+    cout << "sectors/track: " << LittleEndian_HexaToDecimal(sector, 0x18, 2) << endl;
+
+    cout << "Number Of Heads: " << LittleEndian_HexaToDecimal(sector, 0x1A, 2) << endl;
+
+    NTFS_sector_startIndex_logic = LittleEndian_HexaToDecimal(sector, 0x1C, 4);
+    cout << "Hidden sectors: " << NTFS_sector_startIndex_logic << endl;
+
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x20, 4);
+
+    cout << "Signature: "; 
+    PrintHexa(sector, 0x24, 4);
+
+    NTFS_numberOfSector_logic = LittleEndian_HexaToDecimal(sector, 0x28, 8); //
+    cout << "Total Sectors: " << NTFS_numberOfSector_logic << endl;
+
+    NTFS_cluster_startIndex = LittleEndian_HexaToDecimal(sector, 0x30, 8);
+    cout << "Logical Cluster Number for the file $MFT: " << NTFS_cluster_startIndex << endl;
+
+    cout << "Logical Cluster Number for the file $MFTMirr: " << LittleEndian_HexaToDecimal(sector, 0x38, 8) << endl;
+
+    NTFS_MTF_entry_size = MFTEntry_Size(sector);
+    cout << "MFT entry size (in bytes): " << NTFS_MTF_entry_size << endl;
+
+    cout << "Clusters Per Index Buffer: " << LittleEndian_HexaToDecimal(sector, 0x44, 1) << endl;
+
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x45, 3);
+
+    cout << "Volume Serial Number ";
+    PrintHexa(sector, 0x48, 8);
+
+    cout << "Checksum: " << LittleEndian_HexaToDecimal(sector, 0x50, 1) << endl;
+
+    cout << "--------------------------------------------------------" << endl;
+
+    cout << "Boostrap code: ";
+    PrintHexa(sector, 0x54, 426);
+
+    cout << "Signature (55 AA): ";
+    PrintHexa(sector, 0x1FE, 2);
+
+    cout << "************************************************************" << endl;
 }
 
 
