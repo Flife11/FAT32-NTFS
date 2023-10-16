@@ -1,5 +1,6 @@
 ﻿#include "function.h"
 
+//-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
     int retCode = 0;
@@ -81,8 +82,24 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
+string ByteArrToString(BYTE byteArr[], int length)
+{
+    string str = "";
+    for (int i = 0; i < length; ++i)
+    {
+        str += static_cast<char>(byteArr[i]);
+    }
+    return str;
+}
+
+
+//------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
+
 int MFTEntry_Size(BYTE byte_40h_BPB) {
     int decimal = abs(BinaryToDecimal(HexaToBinary(byte_40h_BPB)));
 
     return (pow(2, decimal));
 }
+
+
+//------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------

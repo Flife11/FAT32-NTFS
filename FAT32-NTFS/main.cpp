@@ -9,10 +9,11 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\F:", 3221225472, sector);   
+    ReadSector(L"\\\\.\\F:", 3221225472, sector);
+    cout << ByteArrToString(sector, 5);
     
     
-    /*FILE* outputFile = fopen(outputFileName, "wb");
+   /* FILE* outputFile = fopen(outputFileName, "wb");
 
     if (outputFile == NULL)
     {
@@ -32,7 +33,6 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     fclose(outputFile);*/
 
-    cout << LittleEndian_HexaToDecimal(sector, 8);
 
     /*BYTE a = 0xF6;
     cout << HexaToBinary(a) << endl;
