@@ -6,7 +6,7 @@ int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là by
 int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
 unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
 unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
-unsigned long long NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+unsigned long long NTFS_MFTcluster_startIndex = 0; //Cluster bắt đầu của MFT.
 int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
 
 
@@ -174,8 +174,8 @@ void Read_VBR(BYTE sector[]) {
     NTFS_numberOfSector_logic = LittleEndian_HexaToDecimal(sector, 0x28, 8); //
     cout << "Total Sectors: " << NTFS_numberOfSector_logic << endl;
 
-    NTFS_cluster_startIndex = LittleEndian_HexaToDecimal(sector, 0x30, 8);
-    cout << "Logical Cluster Number for the file $MFT: " << NTFS_cluster_startIndex << endl;
+    NTFS_MFTcluster_startIndex = LittleEndian_HexaToDecimal(sector, 0x30, 8);
+    cout << "Logical Cluster Number for the file $MFT: " << NTFS_MFTcluster_startIndex << endl;
 
     cout << "Logical Cluster Number for the file $MFTMirr: " << LittleEndian_HexaToDecimal(sector, 0x38, 8) << endl;
 
