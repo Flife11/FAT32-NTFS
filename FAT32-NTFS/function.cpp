@@ -1,5 +1,15 @@
 ﻿#include "function.h"
 
+//-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
+int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là byte.
+int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
+int NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
+int NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
+int NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+
+
+//-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
+
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
@@ -35,16 +45,16 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
     }
 }
 
-unsigned long long LittleEndian_HexaToDecimal(BYTE byteArr[], int length) {
+unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int length) {
 
     unsigned long long result = 0;
     //unsigned long long Pow = 0;
 
     for (int i = 0; i < length; i++) {
 
-        result += (unsigned long long)byteArr[i] << (i * 8);
+        result += (unsigned long long)sector[i+ startIndex] << (i * 8);
 
-        /*result += ((unsigned long long)byteArr[i] * pow(16, Pow));
+        /*result += ((unsigned long long)sector[i] * pow(16, Pow));
         Pow += 2;*/
     }
 
@@ -82,12 +92,12 @@ int BinaryToDecimal(string binary) {
     return decimal;
 }
 
-string ByteArrToString(BYTE byteArr[], int length)
+string ByteArrToString(BYTE sector[], int startIndex, int length)
 {
     string str = "";
     for (int i = 0; i < length; ++i)
     {
-        str += static_cast<char>(byteArr[i]);
+        str += static_cast<char>(sector[i + startIndex]);
     }
     return str;
 }
@@ -95,7 +105,10 @@ string ByteArrToString(BYTE byteArr[], int length)
 
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
-int MFTEntry_Size(BYTE byte_40h_BPB) {
+int MFTEntry_Size(BYTE sector_VBR[]) {
+
+    BYTE byte_40h_BPB = sector_VBR[64];
+
     int decimal = abs(BinaryToDecimal(HexaToBinary(byte_40h_BPB)));
 
     return (pow(2, decimal));
