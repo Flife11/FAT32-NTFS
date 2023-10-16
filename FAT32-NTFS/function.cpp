@@ -4,9 +4,10 @@
 
 int NTFS_sector_size = 0; //Kích thước một sector. Đơn vị tính là byte.
 int NTFS_sector_per_cluster = 0; //Số sector trong một cluster.
-int NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
-int NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
-int NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của ổ đĩa logic.
+unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
+unsigned long long NTFS_cluster_startIndex = 0; //Cluster bắt đầu của MFT.
+int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
 
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
@@ -112,7 +113,7 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
     {
         cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
     }
-    cout << endl;
+    cout << dec << endl;
 }
 
 
@@ -129,10 +130,14 @@ int MFTEntry_Size(BYTE sector_VBR[]) {
 
 void Read_VBR(BYTE sector[]) {
 
-    cout << "Jump Instruction to bypass the DPB: ";
+    cout << "********************* [VBR - VOLUME BOOT RECORD] *********************" << endl;
+
+    cout << "Jump Instruction: ";
     PrintHexa(sector, 0x00, 3);
 
-    cout << "Driver Sig: \"" << ByteArrToString(sector, 0x03, 8) << "\"" << endl;
+    cout << "OEM ID: \"" << ByteArrToString(sector, 0x03, 8) << "\"" << endl;
+
+    cout << "-------------- BPB - BIOS parameter block --------------" << endl;
 
     NTFS_sector_size = LittleEndian_HexaToDecimal(sector, 0x0B, 2);
     cout << "Bytes/Sector: " << NTFS_sector_size << endl;
@@ -142,50 +147,61 @@ void Read_VBR(BYTE sector[]) {
     
     cout << "Reserved Sectors: " << LittleEndian_HexaToDecimal(sector, 0x0E, 2) << endl;
 
-    cout << "# of FAT's: " << LittleEndian_HexaToDecimal(sector, 0x10, 1) << endl;
+    cout << "always 0: ";
+    PrintHexa(sector, 0x10, 3);
 
-    cout << "max. # of root dir entries: " << LittleEndian_HexaToDecimal(sector, 0x11, 2) << endl;
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x13, 2);
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Media Descriptor: " << LittleEndian_HexaToDecimal(sector, 0x15, 1) << endl;
 
-    cout << "Media Descriptor: ";
-    PrintHexa(sector, 0x15, 1);
-
-    cout << "sectors/FAT: " << LittleEndian_HexaToDecimal(sector, 0x16, 2) << endl;
+    cout << "always 0: ";
+    PrintHexa(sector, 0x16, 2);
 
     cout << "sectors/track: " << LittleEndian_HexaToDecimal(sector, 0x18, 2) << endl;
 
-    cout << "total heads: " << LittleEndian_HexaToDecimal(sector, 0x1A, 2) << endl;
+    cout << "Number Of Heads: " << LittleEndian_HexaToDecimal(sector, 0x1A, 2) << endl;
 
-    cout << "Hidden sectors: " << LittleEndian_HexaToDecimal(sector, 0x1C, 4) << endl;
+    NTFS_sector_startIndex_logic = LittleEndian_HexaToDecimal(sector, 0x1C, 4);
+    cout << "Hidden sectors: " << NTFS_sector_startIndex_logic << endl;
 
-    cout << "total sectors (partitions > 32MB): " << LittleEndian_HexaToDecimal(sector, 0x20, 4) << endl;
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x20, 4);
 
-    cout << "sectors/FAT: " << LittleEndian_HexaToDecimal(sector, 0x24, 4) << endl;
+    cout << "Signature: "; 
+    PrintHexa(sector, 0x24, 4);
 
-    cout << "flags: " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    NTFS_numberOfSector_logic = LittleEndian_HexaToDecimal(sector, 0x28, 8); //
+    cout << "Total Sectors: " << NTFS_numberOfSector_logic << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    NTFS_cluster_startIndex = LittleEndian_HexaToDecimal(sector, 0x30, 8);
+    cout << "Logical Cluster Number for the file $MFT: " << NTFS_cluster_startIndex << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Logical Cluster Number for the file $MFTMirr: " << LittleEndian_HexaToDecimal(sector, 0x38, 8) << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    NTFS_MTF_entry_size = MFTEntry_Size(sector);
+    cout << "MFT entry size (in bytes): " << NTFS_MTF_entry_size << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Clusters Per Index Buffer: " << LittleEndian_HexaToDecimal(sector, 0x44, 1) << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "not used by NTFS: ";
+    PrintHexa(sector, 0x45, 3);
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Volume Serial Number ";
+    PrintHexa(sector, 0x48, 8);
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Checksum: " << LittleEndian_HexaToDecimal(sector, 0x50, 1) << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "--------------------------------------------------------" << endl;
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Boostrap code: ";
+    PrintHexa(sector, 0x54, 426);
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "Signature (55 AA): ";
+    PrintHexa(sector, 0x1FE, 2);
 
-    cout << "total sectors (partitions < 32MB): " << LittleEndian_HexaToDecimal(sector, 0x13, 2) << endl;
+    cout << "************************************************************" << endl;
 }
+
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------

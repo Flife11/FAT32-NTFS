@@ -58,6 +58,11 @@ void PrintHexa(BYTE sector[], int startIndex, int length);
 /// <param name="sector_VBR">: mảng chứa dữ liệu của sector chứa VBR (Volume Boot Record)</param>
 /// <returns></returns>
 int MFTEntry_Size(BYTE sector_VBR[]);
+
+/// <summary>
+/// Hàm đọc các thông tin được mô tả trong Partition Boot Sector (chỉ đối với NTFS)
+/// </summary>
+/// <param name="sector">mảng chứa dữ liệu của Partition Boot Sector (các byte hexa lưu ở little endian)</param>
 void Read_VBR(BYTE sector[]);
 
 //--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
