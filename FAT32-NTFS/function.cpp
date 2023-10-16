@@ -86,3 +86,15 @@ int MFTEntry_Size(BYTE byte_40h_BPB) {
 
     return (pow(2, decimal));
 }
+
+#include <string>
+
+string ByteArrToString(BYTE byteArr[], int length)
+{
+    string str = "";
+    for (int i = 0; i < length; ++i)
+    {
+        str += static_cast<char>(byteArr[i]);
+    }
+    return str;
+}

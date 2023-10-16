@@ -19,8 +19,7 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]);
 /// <summary>
 /// Hàm để chuyển 1 chuỗi byte hexa (lưu ở little endian) sang decimal
 /// </summary>
-/// <param name="byteArr">: chuỗi byte hexa (lưu ở little endian)</param>
-/// <param name="length">: độ dài chuỗi (số byte)</param>
+
 /// <returns></returns>
 unsigned long long LittleEndian_HexaToDecimal(BYTE byteArr[], int length);
 
@@ -33,3 +32,11 @@ int BinaryToDecimal(string binary);
 /// <param name="byte_40h_BPB">: giá trị hexa của 1 byte nằm ở vị trí 40h của bảng BPB.</param>
 /// <returns></returns>
 int MFTEntry_Size(BYTE byte_40h_BPB);
+
+/// <summary>
+/// Hàm chuyển chuỗi BYTE thành chuỗi string
+/// </summary>
+/// <param name="byteArr">: chuỗi byte hexa (lưu ở little endian)</param>
+/// <param name="length">: độ dài chuỗi (số byte)</param>
+/// <returns></returns>
+string ByteArrToString(BYTE byteArr[], int length);
