@@ -9,7 +9,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\D:", 0, sector);   
+    ReadSector(L"\\\\.\\F:", 3221225472, sector);
     cout << ByteArrToString(sector, 5);
     
     
