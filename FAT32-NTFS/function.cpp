@@ -17,7 +17,7 @@ int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT ent
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int length) {
     int retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -40,13 +40,15 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
 
     SetFilePointerEx(device, li, NULL, FILE_BEGIN);//Set a Point to Read
 
-    if (!ReadFile(device, sector, 512, &bytesRead, NULL))
+    if (!ReadFile(device, sector, length, &bytesRead, NULL))
     {
-        printf("ReadFile: %u\n", GetLastError());
+        return 0;
+        //printf("ReadFile: %u\n", GetLastError());
     }
     else
     {
-        printf("Success!\n");
+        return 1;
+        //printf("Success!\n");
     }
 }
 
@@ -201,6 +203,61 @@ void Read_VBR(BYTE sector[]) {
     PrintHexa(sector, 0x1FE, 2);
 
     cout << "************************************************************" << endl;
+}
+
+bool Read_Entry(unsigned long long Start_Address_MFT)
+{
+    BYTE* sector = new BYTE[NTFS_MTF_entry_size];
+    bool readable = ReadSector(L"\\\\.\\E:", Start_Address_MFT, sector, NTFS_MTF_entry_size);
+    if (readable == 0) return 0;
+
+    int First_Attribute_Offet = LittleEndian_HexaToDecimal(sector, 0x14, 2);
+
+    // Duyệt qua các attribute.
+    int Attribute_Index = LittleEndian_HexaToDecimal(sector, 0x28, 2);
+    int current_Index = First_Attribute_Offet;
+    for (int i = 0; i < Attribute_Index; ++i) {
+        int Attribute_Type = LittleEndian_HexaToDecimal(sector, current_Index, 4);
+        int Attribute_Size = LittleEndian_HexaToDecimal(sector, current_Index + 4, 4);
+        int Attribute_Data_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
+        int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);
+        if (Nonresident_Flag == 0) {
+            // Xử lí resident ở đây
+                // Đây là attribute FILE_NAME
+            if (Attribute_Type == 48) {
+                int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
+                string File_Name = ByteArrToString(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
+                cout << File_Name << "\n";
+                return 1;
+            }
+                // Đây là attribute $STANDARD_INFORMATION
+            if (Attribute_Type == 16) {
+                int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
+                if ((flag & 2) != 0) return 1;
+            }
+
+            current_Index += Attribute_Size;
+        }
+        else {
+            // Xử lí non-resident ở đây
+
+        }
+    }
+    return 1;
+}
+
+void Read_MFT() {
+    // Tính sector bắt đầu của MFT
+    unsigned long long Start_Sector_MFT = NTFS_MFTcluster_startIndex * NTFS_sector_per_cluster;
+    // Tính vị trí bắt đầu của MFT dựa vào số thứ tự sector
+    unsigned long long Start_Address_MFT = Start_Sector_MFT * NTFS_sector_size;
+
+    
+    
+
+    
+
+    
 }
 
 

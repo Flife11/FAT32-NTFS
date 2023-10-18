@@ -17,7 +17,7 @@ using namespace std;
 /// <param name="readPoint">: bắt đầu đọc từ byte thứ readPoint của ổ drive</param>
 /// <param name="sector">: biến lưu nội dung sector</param>
 /// <returns></returns>
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]);
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int length);
 
 /// <summary>
 /// Hàm để chuyển 1 mảng con hexa (lưu ở little endian) sang decimal
@@ -64,5 +64,21 @@ int MFTEntry_Size(BYTE sector_VBR[]);
 /// </summary>
 /// <param name="sector">mảng chứa dữ liệu của Partition Boot Sector (các byte hexa lưu ở little endian)</param>
 void Read_VBR(BYTE sector[]);
+
+/// <summary>
+/// Hàm để đọc 1 entry (MFT entry).
+/// </summary>
+/// <param name="Start_Address_MFT">Vị trí offset của entry</param>
+/// <returns></returns>
+bool Read_Entry(unsigned long long Start_Address_MFT);
+
+/// <summary>
+/// Hàm để đọc MFT (MFT entry).
+/// </summary>
+/// <param></param>
+/// <returns></returns>
+void Read_MFT();
+
+
 
 //--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
