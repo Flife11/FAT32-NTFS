@@ -50,6 +50,15 @@ string ByteArrToString(BYTE sector[], int startIndex, int length);
 /// <param name="length">: độ dài mảng con muốn in ra màn hình (số byte)</param>
 void PrintHexa(BYTE sector[], int startIndex, int length);
 
+/// <summary>
+/// Hàm chuyển 1 mảng con hexa thành chuỗi string (theo Unicode UTF-16)
+/// </summary>
+/// <param name="sector": mảng chứa dữ liệu của sector đã đọc (các byte hexa lưu ở little endian)></param>
+/// <param name="startIndex">: vị trí bắt đầu của mảng con</param>
+/// <param name="length">: độ dài mảng con muốn chuyển</param>
+/// <returns></returns>
+string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
+
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
