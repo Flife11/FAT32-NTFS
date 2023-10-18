@@ -118,11 +118,11 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
 
 string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length) {
     string unicode = "";
-    int character = 0;
-    for (int i = startIndex; i < length; i+=2)
+    int c = 0;
+    for (int i = 0; i < length; i+=2)
     {
-        character = LittleEndian_HexaToDecimal(sector, startIndex + i, 2);
-        unicode.push_back((const char)character);
+        c = LittleEndian_HexaToDecimal(sector, startIndex + i, 2);
+        unicode.push_back((const char)c);
     }
 
     return unicode;
