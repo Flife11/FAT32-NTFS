@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <map>
+#include <vector>
 #include <iomanip>
 using namespace std;
 
@@ -78,6 +80,14 @@ bool Read_Entry(unsigned long long Start_Address_MFT);
 /// <param></param>
 /// <returns></returns>
 void Read_MFT();
+
+/// <summary>
+/// Hàm để vẽ cây thư mục
+/// </summary>
+/// <param name="node">Gốc cây thư mục cần vẽ</param>
+/// <param name="level">Cấp của node hiện tại</param>
+/// <returns></returns>
+void Folder_Structure_BFS(long long node, int level);
 
 
 
