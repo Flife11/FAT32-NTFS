@@ -120,6 +120,17 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
     cout << dec << endl;
 }
 
+string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length) {
+    string unicode = "";
+    int c = 0;
+    for (int i = 0; i < length; i+=2)
+    {
+        c = LittleEndian_HexaToDecimal(sector, startIndex + i, 2);
+        unicode.push_back((const char)c);
+    }
+
+    return unicode;
+}
 
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
