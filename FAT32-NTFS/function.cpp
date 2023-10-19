@@ -8,6 +8,8 @@ unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của
 unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
 unsigned long long NTFS_MFTcluster_startIndex = 0; //Cluster bắt đầu của MFT.
 int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
+long long NTFS_MFT_size = 0;
+map<long long, vector<pair<long long, string> > > NTFS_Child_List;
 
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
@@ -17,7 +19,7 @@ int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT ent
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int length) {
     int retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -40,13 +42,15 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
 
     SetFilePointerEx(device, li, NULL, FILE_BEGIN);//Set a Point to Read
 
-    if (!ReadFile(device, sector, 512, &bytesRead, NULL))
+    if (!ReadFile(device, sector, length, &bytesRead, NULL))
     {
-        printf("ReadFile: %u\n", GetLastError());
+        return 0;
+        //printf("ReadFile: %u\n", GetLastError());
     }
     else
     {
-        printf("Success!\n");
+        return 1;
+        //printf("Success!\n");
     }
 }
 
@@ -212,6 +216,87 @@ void Read_VBR(BYTE sector[]) {
     PrintHexa(sector, 0x1FE, 2);
 
     cout << "************************************************************" << endl;
+}
+
+bool Read_Entry(unsigned long long Start_Address_MFT)
+{
+    BYTE* sector = new BYTE[NTFS_MTF_entry_size];
+    bool readable = ReadSector(L"\\\\.\\E:", Start_Address_MFT, sector, NTFS_MTF_entry_size);
+    
+    
+    //cout << LittleEndian_HexaToDecimal(sector, 0, 4) << "\n";
+    
+    int First_Attribute_Offet = LittleEndian_HexaToDecimal(sector, 0x14, 2);
+    long long ID = LittleEndian_HexaToDecimal(sector, 0x2C, 4);
+    // Duyệt qua các attribute.
+    int Attribute_Index = LittleEndian_HexaToDecimal(sector, 0x28, 2);
+    int current_Index = First_Attribute_Offet;
+    for (int i = 0; i < Attribute_Index; ++i) {
+        int Attribute_Type = LittleEndian_HexaToDecimal(sector, current_Index, 4);
+        int Attribute_Size = LittleEndian_HexaToDecimal(sector, current_Index + 4, 4);
+        int Attribute_Data_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
+        int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);        
+
+        if (Nonresident_Flag == 0) {
+            // Xử lí resident ở đây
+                // Đây là attribute FILE_NAME
+            if (Attribute_Type == 48) {
+                int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
+                int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
+                string File_Name = ByteArrToString(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
+                NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
+                //cout << ID << " " << File_Name << "\n";                
+            }
+                // Đây là attribute $STANDARD_INFORMATION
+            if (Attribute_Type == 16) {
+                int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
+                
+                if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 32) != 0)) && (NTFS_MFT_size != 0)) return 1;
+            }
+        }
+        else {
+            // Xử lí non-resident ở đây
+                // Đây là attribute DATA
+            if (Attribute_Type == 128) {
+                // Lấy MFT size
+                if (NTFS_MFT_size == 0) {
+                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                }
+                //
+            }
+        }
+        current_Index += Attribute_Size;
+    }
+    return 1;
+}
+
+void Folder_Structure_BFS(long long node, int level)
+{
+    int n = NTFS_Child_List[node].size();
+    for (int i = 0; i < n; ++i) {
+        pair<long long, string> u = NTFS_Child_List[node][i];
+        for (int j = 0; j < level * 2; ++j) cout << "--";
+        cout << u.second << "\n";
+        Folder_Structure_BFS(u.first, level + 1);
+    }
+}
+
+void Read_MFT() {
+    // Tính sector bắt đầu của MFT
+    unsigned long long Start_Sector_MFT = NTFS_MFTcluster_startIndex * NTFS_sector_per_cluster;
+    // Tính vị trí bắt đầu của MFT dựa vào số thứ tự sector
+    unsigned long long Start_Address_MFT = Start_Sector_MFT * NTFS_sector_size;
+
+    long long size = 0;
+    do {
+        Read_Entry(Start_Address_MFT);
+        Start_Address_MFT += NTFS_MTF_entry_size;
+        size += NTFS_MTF_entry_size;        
+    } while (size < NTFS_MFT_size);
+   
+    Folder_Structure_BFS(39, 1);
+
+    
 }
 
 
