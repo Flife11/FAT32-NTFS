@@ -5,14 +5,14 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 {
 
     BYTE sector[512];
-    const char* outputFileName = "sector_data.bin";
+    //const char* outputFileName = "sector_data.bin";
 
     //MFT start:
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\F:", 3221225472, sector);
+    ReadSector(L"\\\\.\\E:", 0, sector);
     //cout << HexaToUnicodeUTF16(sector, 242, 22);//success
-    Read_VBR(sector); //sucess
+    //Read_VBR(sector); //sucess
 
 
     //cout << ByteArrToString(sector, 0,5); //success
@@ -38,7 +38,8 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     fclose(outputFile);*/
 
-    
+    BootSector_FAT32 fat32 = read_BootSector(sector);
+    Print_BootSector(fat32);
 
     return 0;
 }

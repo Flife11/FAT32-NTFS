@@ -216,3 +216,30 @@ void Read_VBR(BYTE sector[]) {
 
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------
+BootSector_FAT32 read_BootSector(BYTE* bootSector_ptr)
+{
+    BootSector_FAT32 result;
+    result.byte_per_sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0xB, 2);         //offset B (hex) = 11 (dec), chiếm 2 bytes
+    result.Sector_per_Cluster = LittleEndian_HexaToDecimal(bootSector_ptr, 0xD, 1);      //offset D (hex) = 13 (dec), chiếm 1 byte
+    result.Reserved_Sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0xE, 2);         //offset E (hex) = 14 (dec), chiếm 2 byte
+    result.No_FAT = LittleEndian_HexaToDecimal(bootSector_ptr, 0x10, 1);                 //offset 10(hex) = 16 (dec), 1 byte
+    result.RDET_Entries = LittleEndian_HexaToDecimal(bootSector_ptr, 0x11, 2);           //offset 11(hex) = 17(dec), 2 bytes
+    result.Total_Sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0x20, 4);           //offset 20(hex) = 32(dec), 4 bytes
+    result.Sector_per_FAT = LittleEndian_HexaToDecimal(bootSector_ptr, 0x24, 4);         //offset 24(hex) = 36(dec), 4 bytes
+    result.Root = LittleEndian_HexaToDecimal(bootSector_ptr, 0x2C, 4);                   //offset 2C(hex) = 44(dec), 4 bytes
+    return result;
+}
+
+void Print_BootSector(BootSector_FAT32 FAT32)
+{
+    cout << "----------BOOTSECTOR----------" << endl;
+    cout << "\tFAT32" << endl;
+    cout << "\tSo bytes tren 1 Sector: " << FAT32.byte_per_sector << " (bytes)." << endl;
+    cout << "\tSo sector moi cluster (Sc): " << FAT32.Sector_per_Cluster << "(sectors)." << endl;
+    cout << "\tSo sector cua BootSector (Sb): " << FAT32.Reserved_Sector << "(sectors)." << endl;
+    cout << "\tSo bang FAT (NF): " << FAT32.No_FAT << "(sectors)" << endl;
+    cout << "\tSo Entry của RDET (SRDET): " << FAT32.RDET_Entries << "(Entries)." << endl;
+    cout << "\tTong so sector (Sv): " << FAT32.Total_Sector << "(sectors)." << endl;
+    cout << "\tSo sector moi bang FAT (SF): " << FAT32.Sector_per_FAT << "(sectors)." << endl;
+    cout << "\tSector bat dau cu RDET: " << FAT32.Root << endl;
+}
