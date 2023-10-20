@@ -1,4 +1,8 @@
 ﻿#include "function.h"
+//-------------------------------------- BIẾN TOÀN CỤC CHUNG ---------------------------------------------------
+
+LPCWSTR dirName; //Tên ổ đĩa
+
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
 
@@ -132,6 +136,36 @@ string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length) {
     return unicode;
 }
 
+bool IsNTFS(BYTE* sector) {
+    string dirNamestring = "";
+    cout << "Input drive name: ";
+    cin >> dirNamestring;
+
+    // Xử lý chuyển từ tên ổ đĩa sang kiểu LPCWSTR để truyền vào hàm ReadSector
+    dirNamestring.push_back(':');
+    dirNamestring.insert(0, "\\\\.\\");
+
+    wstring stemp = wstring(dirNamestring.begin(), dirNamestring.end());
+    const wchar_t* dirNametemp = stemp.c_str();
+    size_t stringLength = wcslen(dirNametemp) + 1;
+    wchar_t* wideString = new wchar_t[stringLength];
+    wcscpy_s(wideString, stringLength, dirNametemp);
+    dirName = wideString;
+    //tới chỗ này hoy :0
+
+
+    ReadSector(dirName, 0, sector, 512);
+
+    //Nếu là hệ thống NTFS
+    if (ByteArrToString(sector, 0x03, 8) == "NTFS    ") {
+        return true;
+    }
+
+    //Nếu là FAT32
+    else {
+        return false;
+    }
+}
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
 int MFTEntry_Size(BYTE sector_VBR[]) {
@@ -221,7 +255,7 @@ void Read_VBR(BYTE sector[]) {
 bool Read_Entry(unsigned long long Start_Address_MFT)
 {
     BYTE* sector = new BYTE[NTFS_MTF_entry_size];
-    bool readable = ReadSector(L"\\\\.\\E:", Start_Address_MFT, sector, NTFS_MTF_entry_size);
+    bool readable = ReadSector(dirName, Start_Address_MFT, sector, NTFS_MTF_entry_size);
     
     
     //cout << LittleEndian_HexaToDecimal(sector, 0, 4) << "\n";
@@ -267,6 +301,10 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
         }
         current_Index += Attribute_Size;
     }
+
+    //Giải phóng vùng nhớ
+    delete[] sector;
+
     return 1;
 }
 
