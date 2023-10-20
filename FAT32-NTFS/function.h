@@ -10,6 +10,7 @@
 #include <iomanip>
 using namespace std;
 
+
 //--------------------------------------KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32)------------------------------------------
 
 /// <summary>
@@ -60,6 +61,15 @@ void PrintHexa(BYTE sector[], int startIndex, int length);
 /// <param name="length">: độ dài mảng con muốn chuyển</param>
 /// <returns></returns>
 string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
+
+
+/// <summary>
+/// Hàm nhập vào tên ổ đĩa và kiểm tra ổ đĩa có dùng hệ thống NTFS hay không. Nếu có, trả về true, nếu không (là FAT32), trả về false.
+/// Đồng thời, hàm lưu lại sector đầu tiên của ổ đĩa vào tham số sector
+/// </summary>
+/// <param name="sector">: mảng động đã được cấp phát vùng nhớ 512 byte để lưu sector đầu của ổ đĩa</param>
+/// <returns></returns>
+bool IsNTFS(BYTE* sector);
 
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
