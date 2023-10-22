@@ -221,25 +221,25 @@ void Read_VBR(BYTE sector[]) {
 bool Read_Entry(unsigned long long Start_Address_MFT)
 {
     BYTE* sector = new BYTE[NTFS_MTF_entry_size];
-    bool readable = ReadSector(L"\\\\.\\E:", Start_Address_MFT, sector, NTFS_MTF_entry_size);
-    
-    
+    bool readable = ReadSector(dirName, Start_Address_MFT, sector, NTFS_MTF_entry_size);
+
+
     //cout << LittleEndian_HexaToDecimal(sector, 0, 4) << "\n";
-    
-    int First_Attribute_Offet = LittleEndian_HexaToDecimal(sector, 0x14, 2);
+
+    int First_Attribute_Offset = LittleEndian_HexaToDecimal(sector, 0x14, 2);
     long long ID = LittleEndian_HexaToDecimal(sector, 0x2C, 4);
     // Duyệt qua các attribute.
     int Attribute_Index = LittleEndian_HexaToDecimal(sector, 0x28, 2);
-    int current_Index = First_Attribute_Offet;
+    int current_Index = First_Attribute_Offset;
     for (int i = 0; i < Attribute_Index; ++i) {
         int Attribute_Type = LittleEndian_HexaToDecimal(sector, current_Index, 4);
         int Attribute_Size = LittleEndian_HexaToDecimal(sector, current_Index + 4, 4);
         int Attribute_Data_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
-        int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);        
+        int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);
 
+        // Xử lí resident 
         if (Nonresident_Flag == 0) {
-            // Xử lí resident ở đây
-                // Đây là attribute FILE_NAME
+            // $FILE_NAME
             if (Attribute_Type == 48) {
                 int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
                 int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
@@ -247,26 +247,42 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
                 //cout << ID << " " << File_Name << "\n";                
             }
-                // Đây là attribute $STANDARD_INFORMATION
+            // $STANDARD_INFORMATION
             if (Attribute_Type == 16) {
                 int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
-                
+
                 if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 32) != 0)) && (NTFS_MFT_size != 0)) return 1;
             }
         }
+        // Xử lí non-resident
         else {
-            // Xử lí non-resident ở đây
-                // Đây là attribute DATA
+            // $DATA
             if (Attribute_Type == 128) {
-                // Lấy MFT size
-                if (NTFS_MFT_size == 0) {
-                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                //// Lấy MFT size
+                //if (NTFS_MFT_size == 0) {
+                //    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                //}
+
+                // duyệt qua từng data run để đọc hết file 
+                string data;
+                int Cluster_Count = LittleEndian_HexaToDecimal(sector, current_Index + 65, 1);
+                int First_Cluster_Offset = 0;
+                First_Cluster_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 66, 8);
+                unsigned long long Current_Offset = 0;
+                for (int j = 0; j < Cluster_Count; j++)
+                {
+                    Current_Offset += First_Cluster_Offset;
+                    data = data + HexaToUnicodeUTF16(sector, Current_Offset, First_Cluster_Offset);
                 }
-                //
+
             }
         }
         current_Index += Attribute_Size;
     }
+
+    //Giải phóng vùng nhớ
+    delete[] sector;
+
     return 1;
 }
 
