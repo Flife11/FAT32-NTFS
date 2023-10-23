@@ -256,6 +256,7 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
 {
     BYTE* sector = new BYTE[NTFS_MTF_entry_size];
     bool readable = ReadSector(dirName, Start_Address_MFT, sector, NTFS_MTF_entry_size);
+    string File_Name = "";
     
     
     //cout << LittleEndian_HexaToDecimal(sector, 0, 4) << "\n";
@@ -285,27 +286,27 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
             if (Attribute_Type == 48) {
                 int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
                 int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
-                string File_Name = ByteArrToString(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
+                File_Name = HexaToUnicodeUTF16(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
                 NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
-                //cout << ID << " " << File_Name << "\n";  
             }
 
                 // Đây là attribute $DATA
             if (Attribute_Type == 128) {
-
-               
+                // Lấy MFT size
+                if (NTFS_MFT_size == 0) {
+                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                }
             }
         }
         else {
             // Xử lí non-resident ở đây
             
                 // Đây là attribute $DATA
-            if (Attribute_Type == 128) { //Nếu i = 0 thì là entry của MFT => lấy size của MFT table, không phải của file
+            if (Attribute_Type == 128) {
                 // Lấy MFT size
                 if (NTFS_MFT_size == 0) {
                     NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
                 }
-                //
             }
         }
         current_Index += Attribute_Size;
@@ -341,7 +342,7 @@ void Read_MFT() {
         size += NTFS_MTF_entry_size;        
     } while (size < NTFS_MFT_size);
    
-    Folder_Structure_BFS(39, 1);
+    Folder_Structure_BFS(5, 1);
 
     
 }
