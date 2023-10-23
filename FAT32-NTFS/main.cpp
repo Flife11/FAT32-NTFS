@@ -40,6 +40,11 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     BootSector_FAT32 fat32 = read_BootSector(sector);
     Print_BootSector(fat32);
+    cout << "-------------------------------------BootSector doc duoc-------------------------------------" << endl;
+    PrintHexa(sector, 0, 512);
+    int* FAT_table = nullptr;
 
+    read_FAT_table(L"\\\\.\\E:", fat32, FAT_table);
+    
     return 0;
 }

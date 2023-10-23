@@ -102,5 +102,17 @@ BootSector_FAT32 read_BootSector(BYTE* bootSector_ptr);
 /// <summary>
 /// Hàm in các thông số đáng chú ý của bootSector vừa đọc được từ hàm read_BootSector
 /// </summary>
-/// <param name="FAT32"></param>
+/// <param name="FAT32">Chứa thông tin của bootsector</param>
 void Print_BootSector(BootSector_FAT32 FAT32);
+
+/// <summary>
+/// Hàm đọc 2 Bảng FAT
+/// </summary>
+/// <param name="drive">Tên Volume</param>
+/// <param name="fat32">Các thông số của bootsector đã đọc</param>
+/// <param name="FAT_table_result">Biến con trỏ lưu mảng kết quả của hàm này</param>
+void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result);
+//void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, BYTE* FAT_table_result);
+
+
+//void initFAT(int*& FAT, BootSector_FAT32 fat32, LPCWSTR drive1);

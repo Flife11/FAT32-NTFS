@@ -112,6 +112,11 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
     for (int i = 0; i < length; i++)
     {
         cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
+        // xuống dòng cho dễ nhìn
+        //------------------------------------------------------------
+        if ((i + 1) % 16 == 0)
+            cout << endl;
+        //----------------------------------------------------------------
     }
     cout << dec << endl;
 }
@@ -238,8 +243,30 @@ void Print_BootSector(BootSector_FAT32 FAT32)
     cout << "\tSo sector moi cluster (Sc): " << FAT32.Sector_per_Cluster << "(sectors)." << endl;
     cout << "\tSo sector cua BootSector (Sb): " << FAT32.Reserved_Sector << "(sectors)." << endl;
     cout << "\tSo bang FAT (NF): " << FAT32.No_FAT << "(sectors)" << endl;
-    cout << "\tSo Entry của RDET (SRDET): " << FAT32.RDET_Entries << "(Entries)." << endl;
+    cout << "\tSo Entry cua RDET (SRDET): " << FAT32.RDET_Entries << "(Entries)." << endl;
     cout << "\tTong so sector (Sv): " << FAT32.Total_Sector << "(sectors)." << endl;
     cout << "\tSo sector moi bang FAT (SF): " << FAT32.Sector_per_FAT << "(sectors)." << endl;
     cout << "\tSector bat dau cu RDET: " << FAT32.Root << endl;
 }
+
+void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result)
+{
+    if (FAT_table_result != NULL)
+        delete[] FAT_table_result;
+    int Fat_table_size = fat32.byte_per_sector * fat32.Sector_per_FAT;
+    int number_Of_entries = Fat_table_size / 4;
+    FAT_table_result = new int[number_Of_entries];
+    ifstream disk(driver);
+    char* buffer = new char[Fat_table_size];
+    disk.seekg(fat32.Reserved_Sector * fat32.byte_per_sector, 0);
+    disk.read(buffer, Fat_table_size);
+
+    BYTE* readBytes = (BYTE*)buffer;
+    for (int i = 0; i < number_Of_entries; i++)
+    {
+        FAT_table_result[i] = LittleEndian_HexaToDecimal(readBytes, i * 4, 4);
+    }
+}
+
+
+
