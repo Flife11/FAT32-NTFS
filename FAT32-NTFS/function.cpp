@@ -12,7 +12,8 @@ unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của
 unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
 unsigned long long NTFS_MFTcluster_startIndex = 0; //Cluster bắt đầu của MFT.
 int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
-long long NTFS_MFT_size = 0;
+long long NTFS_MFT_size = 0; //Kích thước của MFT
+int NTFS_root_directory_ID = 0; //ID của thư mục gốc
 map<long long, vector<pair<long long, string> > > NTFS_Child_List;
 
 
@@ -286,6 +287,8 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
             if (Attribute_Type == 48) {
                 int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
                 int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
+                if (NTFS_root_directory_ID == 0)
+                    NTFS_root_directory_ID = Parent_ID;
                 File_Name = HexaToUnicodeUTF16(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
                 NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
             }
@@ -323,7 +326,12 @@ void Folder_Structure_BFS(long long node, int level)
     int n = NTFS_Child_List[node].size();
     for (int i = 0; i < n; ++i) {
         pair<long long, string> u = NTFS_Child_List[node][i];
-        for (int j = 0; j < level * 2; ++j) cout << "--";
+        for (int j = 0; j < level ; ++j) {
+            if (j == level  - 1)
+                cout << "|__";
+            else
+                cout << "|  ";
+        }
         cout << u.second << "\n";
         Folder_Structure_BFS(u.first, level + 1);
     }
@@ -342,7 +350,7 @@ void Read_MFT() {
         size += NTFS_MTF_entry_size;        
     } while (size < NTFS_MFT_size);
    
-    Folder_Structure_BFS(5, 1);
+    Folder_Structure_BFS(NTFS_root_directory_ID, 1);
 
     
 }
