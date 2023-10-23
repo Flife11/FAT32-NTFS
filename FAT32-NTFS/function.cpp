@@ -273,14 +273,7 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
 
         if (Nonresident_Flag == 0) {
             // Xử lí resident ở đây
-                // Đây là attribute FILE_NAME
-            if (Attribute_Type == 48) {
-                int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset +  64, 1);
-                int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
-                string File_Name = ByteArrToString(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
-                NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
-                //cout << ID << " " << File_Name << "\n";                
-            }
+            
                 // Đây là attribute $STANDARD_INFORMATION
             if (Attribute_Type == 16) {
                 int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
@@ -288,17 +281,26 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 32) != 0)) && (NTFS_MFT_size != 0)) return 1;
             }
 
-            if (Attribute_Type == 128 && i!=0) { //Nếu i = 0 thì là entry của MFT => bỏ qua
-                // Lấy MFT size
-                /*if (NTFS_MFT_size == 0) {
-                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
-                }*/
+                // Đây là attribute $FILE_NAME
+            if (Attribute_Type == 48) {
+                int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
+                int Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
+                string File_Name = ByteArrToString(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
+                NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
+                //cout << ID << " " << File_Name << "\n";  
+            }
+
+                // Đây là attribute $DATA
+            if (Attribute_Type == 128) {
+
+               
             }
         }
         else {
             // Xử lí non-resident ở đây
-                // Đây là attribute DATA
-            if (Attribute_Type == 128 && i==0) { //Nếu i = 0 thì là entry của MFT => lấy size của MFT table, không phải của file
+            
+                // Đây là attribute $DATA
+            if (Attribute_Type == 128) { //Nếu i = 0 thì là entry của MFT => lấy size của MFT table, không phải của file
                 // Lấy MFT size
                 if (NTFS_MFT_size == 0) {
                     NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
