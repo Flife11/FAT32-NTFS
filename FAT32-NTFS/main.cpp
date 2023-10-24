@@ -11,6 +11,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     if (isNTFS == true) {
         Read_VBR(sector); //sucess
         Read_MFT(); //developing
+
     }
 
     //Nếu là FAT32
