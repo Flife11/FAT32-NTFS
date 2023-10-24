@@ -71,7 +71,10 @@ string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
 /// <returns></returns>
 bool IsNTFS(BYTE* sector);
 
-
+/// <summary>
+/// Hàm xử lý truy xuất cây thư mục 
+/// </summary>
+void Choose_File();
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
