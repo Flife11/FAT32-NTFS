@@ -7,12 +7,21 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     BYTE* sector = new BYTE[512];
     bool isNTFS = IsNTFS(sector);
 
+    int choose_file = 1;
+
     //Nếu là hệ thống NTFS
     if (isNTFS == true) {
         Read_VBR(sector); //sucess
         Read_MFT(); //developing
 
-        //test();
+        do
+        { 
+            Choose_File();
+            cout << endl;
+            cout << "Tiep tuc doc file/folder? (0: ngung, 1: tiep tuc): ";
+            cin >> choose_file;
+        } while (choose_file!=0);
+        
     }
 
     //Nếu là FAT32
