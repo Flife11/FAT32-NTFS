@@ -292,7 +292,7 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 if (NTFS_root_directory_ID == 0)
                     NTFS_root_directory_ID = Parent_ID;
                 File_Name = HexaToUnicodeUTF16(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
-                if(File_Name != "$MFT")
+                if(File_Name.length() > 0 && File_Name[0] != '$')
                     NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
             }
 
@@ -338,7 +338,7 @@ void Folder_Structure_BFS(long long node, int level)
             else
                 cout << "|  ";
         }
-        cout << u.second << "\n";
+        cout << u.second << " [" << node << "-" << i << "]" << endl;
         Folder_Structure_BFS(u.first, level + 1);
     }
 }
@@ -350,19 +350,28 @@ void Read_MFT() {
     unsigned long long Start_Address_MFT = Start_Sector_MFT * NTFS_sector_size;
 
     long long size = 0;
-    int i = 0;//
     do {
         Read_Entry(Start_Address_MFT);
         Start_Address_MFT += NTFS_MTF_entry_size;
         size += NTFS_MTF_entry_size;   
-        i++;//
     } while (size < NTFS_MFT_size);
    
+    cout << endl;
+    cout << "(Thong tin trong dau ngoac vuong [ ] chi la index, khong nam trong ten thu muc)" << endl << endl;
     Folder_Structure_BFS(NTFS_root_directory_ID, 1);
 
     
 }
 
+void test() {
+    cout << endl;
+    for (int i = 0; i < NTFS_Child_List.size(); i++) {
+        for (int j = 0; j < NTFS_Child_List[i].size(); j++)
+        {
+            cout << NTFS_Child_List[i][j].second << endl;
+        }
+    }
+}
 
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------

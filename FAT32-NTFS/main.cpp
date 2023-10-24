@@ -12,6 +12,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
         Read_VBR(sector); //sucess
         Read_MFT(); //developing
 
+        //test();
     }
 
     //Nếu là FAT32

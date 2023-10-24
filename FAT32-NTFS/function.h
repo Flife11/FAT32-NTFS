@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <iomanip>
+#include <variant>
 using namespace std;
 
 
@@ -71,7 +72,7 @@ string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
 /// <returns></returns>
 bool IsNTFS(BYTE* sector);
 
-
+void test();
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
