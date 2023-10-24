@@ -269,6 +269,8 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
     int current_Index = First_Attribute_Offet;
     for (int i = 0; i < Attribute_Index; ++i) {
         int Attribute_Type = LittleEndian_HexaToDecimal(sector, current_Index, 4);
+        if (Attribute_Type == -1)
+            return 1;
         int Attribute_Size = LittleEndian_HexaToDecimal(sector, current_Index + 4, 4);
         int Attribute_Data_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
         int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);        
@@ -280,7 +282,7 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
             if (Attribute_Type == 16) {
                 int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
                 
-                if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 32) != 0)) && (NTFS_MFT_size != 0)) return 1;
+                if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 6) != 0)/* || ((flag & 32) != 0)*/) && (NTFS_MFT_size != 0)) return 1;
             }
 
                 // Đây là attribute $FILE_NAME
@@ -290,14 +292,18 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 if (NTFS_root_directory_ID == 0)
                     NTFS_root_directory_ID = Parent_ID;
                 File_Name = HexaToUnicodeUTF16(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
-                NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
+                if(File_Name != "$MFT")
+                    NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
             }
 
                 // Đây là attribute $DATA
             if (Attribute_Type == 128) {
                 // Lấy MFT size
-                if (NTFS_MFT_size == 0) {
+                if (NTFS_MFT_size == 0) { // Nếu NTFS_MFT_size =0 => chưa đọc NTFS_MFT_size, là đang ở $MFT => chỉ lấy size rồi skip
                     NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                }
+                else {
+
                 }
             }
         }
@@ -307,7 +313,7 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 // Đây là attribute $DATA
             if (Attribute_Type == 128) {
                 // Lấy MFT size
-                if (NTFS_MFT_size == 0) {
+                if (NTFS_MFT_size == 0) { // Nếu NTFS_MFT_size =0 => chưa đọc NTFS_MFT_size, là đang ở $MFT => chỉ lấy size rồi skip
                     NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
                 }
             }
@@ -344,16 +350,19 @@ void Read_MFT() {
     unsigned long long Start_Address_MFT = Start_Sector_MFT * NTFS_sector_size;
 
     long long size = 0;
+    int i = 0;//
     do {
         Read_Entry(Start_Address_MFT);
         Start_Address_MFT += NTFS_MTF_entry_size;
-        size += NTFS_MTF_entry_size;        
+        size += NTFS_MTF_entry_size;   
+        i++;//
     } while (size < NTFS_MFT_size);
    
     Folder_Structure_BFS(NTFS_root_directory_ID, 1);
 
     
 }
+
 
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------

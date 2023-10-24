@@ -71,6 +71,7 @@ string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
 /// <returns></returns>
 bool IsNTFS(BYTE* sector);
 
+
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
