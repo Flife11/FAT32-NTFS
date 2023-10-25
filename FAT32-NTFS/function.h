@@ -88,7 +88,7 @@ struct BootSector_FAT32
 	int RDET_Entries; //Số Entrys của RDET, thường = 0	[SRDET]	(offset 11 - 2 bytes)
 	long Total_Sector;//Tổng số sector (kích thức Volume)[Sv]	(offset 20 - 4 bytes)
 	int Sector_per_FAT;//Số sector mỗi bảng FAT			[Sf]	(offset 24 - 4 bytes)
-	int Root; //Sector bắt đầu của RDET							(offset 2C - 4 bytes) 
+	int Root; //Cluster bắt đầu của RDET						(offset 2C - 4 bytes) 
 };
 
 /// <summary>
@@ -116,3 +116,19 @@ void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_resul
 
 
 //void initFAT(int*& FAT, BootSector_FAT32 fat32, LPCWSTR drive1);
+
+// Cau truc DIRECTORY
+struct MAIN_ENTRY {
+	char name[10];             // Tên thư mục/tập tin
+	char extensionName[10];             // Tên thư mục/tập tin
+	int attribute;              // Thuộc tính 
+	int startCluster;           // Cluster bắt đầu
+	int fileSize;               // Kích cỡ (tính theo byte)
+	//DIRECTORY* next;            // Trỏ đến thư mục/ tập tin tiếp theo
+	//DIRECTORY* dir;             // Trỏ đến thư mục con
+};
+int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
+
+void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSector_FAT32 fat32, LPCWSTR drive1, string space);
+void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, string space);
+//void freeDirEntries(DIRECTORY* dir);

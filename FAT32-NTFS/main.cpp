@@ -10,7 +10,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     //MFT start:
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\E:", 0, sector);
+    ReadSector(L"\\\\.\\G:", 0, sector);
     //cout << HexaToUnicodeUTF16(sector, 242, 22);//success
     //Read_VBR(sector); //sucess
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     PrintHexa(sector, 0, 512);
     int* FAT_table = nullptr;
 
-    read_FAT_table(L"\\\\.\\E:", fat32, FAT_table);
+    read_FAT_table(L"\\\\.\\G:", fat32, FAT_table);
     
     return 0;
 }

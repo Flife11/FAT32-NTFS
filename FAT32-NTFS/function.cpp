@@ -267,6 +267,14 @@ void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_resul
         FAT_table_result[i] = LittleEndian_HexaToDecimal(readBytes, i * 4, 4);
     }
 }
+//------------------------------------- KHU VỰC HÀM CHO CAY THU MUC FAT32 -------------------------------------------------------
+
+int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
+    //Sector dau tien cua DATA (RDET)
+    int dataFirstSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT;
+    return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
+}
+
 
 
 
