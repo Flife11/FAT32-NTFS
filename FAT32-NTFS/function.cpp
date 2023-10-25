@@ -327,6 +327,29 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
                 if (NTFS_MFT_size == 0) { // Nếu NTFS_MFT_size =0 => chưa đọc NTFS_MFT_size, là đang ở $MFT => chỉ lấy size rồi skip
                     NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
                 }
+                // read data run
+                else {
+                    if (File_Name.find(".txt") != string::npos) {
+                        // vi tri bat dau doc
+                        long long First_Cluster_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 66, 6);
+                        unsigned long long start_index = First_Cluster_Offset * NTFS_sector_size * NTFS_sector_per_cluster;
+
+                        // real-size: dung luong data thuc te
+                        int real_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                        // read_size: dung luong data phai doc. la boi so cua 512
+                        int read_size = 0;
+                        for (int i = 1; read_size < real_size; i++) {
+                            read_size += NTFS_sector_size;
+                        }
+
+                        // doc datarun
+                        BYTE* sector_read = new BYTE[read_size];
+                        ReadSector(dirName, start_index, sector_read, read_size);
+
+                        string Data = ByteArrToString(sector_read, 0, real_size);
+                        NTFS_Child_Data[Parent_ID][NTFS_Child_Data[Parent_ID].size() - 1].second = Data;
+                    }
+                }
             }
         }
         current_Index += Attribute_Size;
