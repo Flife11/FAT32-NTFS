@@ -348,6 +348,9 @@ bool Read_Entry(unsigned long long Start_Address_MFT)
 
                         string Data = ByteArrToString(sector_read, 0, real_size);
                         NTFS_Child_Data[Parent_ID][NTFS_Child_Data[Parent_ID].size() - 1].second = Data;
+
+                        //giai phong vung nho
+                        delete[] sector_read;
                     }
                 }
             }
