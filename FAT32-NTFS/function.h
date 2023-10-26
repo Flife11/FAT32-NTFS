@@ -120,15 +120,20 @@ void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_resul
 // Cau truc DIRECTORY
 struct MAIN_ENTRY {
 	char name[10];             // Tên thư mục/tập tin
-	char extensionName[10];             // Tên thư mục/tập tin
-	int attribute;              // Thuộc tính 
+	char extensionName[3];             // Tên thư mục/tập tin
+	string attribute;              // Thuộc tính 
 	int startCluster;           // Cluster bắt đầu
 	int fileSize;               // Kích cỡ (tính theo byte)
 	//DIRECTORY* next;            // Trỏ đến thư mục/ tập tin tiếp theo
 	//DIRECTORY* dir;             // Trỏ đến thư mục con
 };
+
+struct DUMMY {
+
+};
 int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
 
 void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSector_FAT32 fat32, LPCWSTR drive1, string space);
+void printTree(MAIN_ENTRY entry, int level);
 void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, string space);
 //void freeDirEntries(DIRECTORY* dir);

@@ -275,6 +275,71 @@ int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
     return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
 }
 
+void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSector_FAT32 fat32, LPCWSTR drive1, string space) {
+    int clusterSizeByte = fat32.byte_per_sector * fat32.Sector_per_Cluster; //Moi sector co 32byte theo fat32
+
+    //Tong entries
+    int entriesCount = clusterSizeByte / 32;
+    char* a = new char[clusterSizeByte];
+    int firstSector = firstSectorIndex_Cluster(clusIndex, fat32);
+    fstream diskStream(drive1, std::ios::in);
+    //Bo qua sector dau - System data
+    diskStream.seekg(firstSector * fat32.byte_per_sector, SEEK_SET);
+    //Doc ca cluster
+    diskStream.read(a, clusterSizeByte);
+    BYTE* readBytes = new BYTE[clusterSizeByte];
+    readBytes = (BYTE*)a;
+    
+    //Khoi tao main entry
+    MAIN_ENTRY mainEntry;
+    //delete[] a;
+
+    for (int i = firstRecordIndex; i < entriesCount; i++)
+    {
+        // trong
+        if (readBytes[32 * i] == 0x0)
+            break;
+        // Tap tin da bi xoa
+        else if (readBytes[32 * i] == 0xE5) 
+            continue;
+
+        int entryType = LittleEndian_HexaToDecimal(readBytes, 0xB, 1);
+
+        string stackName;
+        //Case entry phu
+        if (entryType == 0xF)
+        {
+            //Xu ly ten dai
+            /*Doc tung entry, doc ten tu tren xuong
+            push vo stack name
+            de lat toi entry chinh pop ra -> lay duoc ten file
+            */
+        }
+
+        //Cac loai khac 0xF
+        else {
+            //Decode loai
+            //0 - read only
+            //1 - hidden
+            //2 - system
+            //3 - volable
+            //4 - directory
+            //5 - archive - file
+            //Chuyen hex sang nhi phan, tim vi tri cua bit 1 trong day nhi phan, vi tri = type
+            char types[] = {'R', 'H', 'S', 'V', 'D', 'A'};
+            //tim vi tri xong xuat ra cai nay
+            string type;
+
+            //Gan gia tri cua 
+            mainEntry.attribute = type;
+            mainEntry.fileSize = LittleEndian_HexaToDecimal(readBytes, 0x1C, 4);
+            
+
+
+        }
+    }
+
+}
 
 
 
