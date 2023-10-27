@@ -10,7 +10,8 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     //MFT start:
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
-    ReadSector(L"\\\\.\\G:", 0, sector);
+    LPCWSTR driver = L"\\\\.\\E:";
+    ReadSector(L"\\\\.\\E:", 0, sector);
     //cout << HexaToUnicodeUTF16(sector, 242, 22);//success
     //Read_VBR(sector); //sucess
 
@@ -41,10 +42,12 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     BootSector_FAT32 fat32 = read_BootSector(sector);
     Print_BootSector(fat32);
     cout << "-------------------------------------BootSector doc duoc-------------------------------------" << endl;
-    PrintHexa(sector, 0, 512);
+    //PrintHexa(sector, 0, 512);
     int* FAT_table = nullptr;
 
-    read_FAT_table(L"\\\\.\\G:", fat32, FAT_table);
+    read_FAT_table(L"\\\\.\\E:", fat32, FAT_table);
+    
+    readDirectory(0, fat32.Root, FAT_table, fat32, driver, " ");
     
     return 0;
 }

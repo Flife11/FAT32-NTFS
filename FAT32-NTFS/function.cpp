@@ -74,7 +74,13 @@ string ByteArrToString(BYTE sector[], int startIndex, int length)
     string str = "";
     for (int i = 0; i < length; ++i)
     {
-        str += static_cast<char>(sector[i + startIndex]);
+        //str += static_cast<char>(sector[i + startIndex]); 
+        //Cap nhat de loai bo chen ki tu '\0' va ki tu trong 0xFF
+        char c = static_cast<char>(sector[i + startIndex]);
+        if (c != '\0' && sector[i + startIndex] != 0xFF)
+        {
+            str += c;
+        }
     }
     return str;
 }
@@ -294,30 +300,85 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSect
     MAIN_ENTRY mainEntry;
     //delete[] a;
 
+    //Danh cho luu tru ten dai
+    string stackName = "";
+
+    bool hasSubEntry = false;
+
     for (int i = firstRecordIndex; i < entriesCount; i++)
     {
-        // trong
+
+        //cout << "Entry: " << readBytes[32 * i] << endl;
+        // Entry trong
         if (readBytes[32 * i] == 0x0)
             break;
         // Tap tin da bi xoa
         else if (readBytes[32 * i] == 0xE5) 
             continue;
 
-        int entryType = LittleEndian_HexaToDecimal(readBytes, 0xB, 1);
+        int entryStatus = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0xB, 1);
 
-        string stackName;
         //Case entry phu
-        if (entryType == 0xF)
+        if (entryStatus == 0xF)
         {
             //Xu ly ten dai
             /*Doc tung entry, doc ten tu tren xuong
             push vo stack name
             de lat toi entry chinh pop ra -> lay duoc ten file
             */
+            string tempString = "";
+            string tempName = "";
+            tempString = ByteArrToString(readBytes, 32 * i + 0x1, 10);
+            //Offset 1 - 10 bytes
+            tempName = tempName + tempString;
+            tempString = "";
+
+            //Offset 0xE - 12 bytes
+            tempString = ByteArrToString(readBytes, 32 * i + 0xE, 12);
+            tempName = tempName + tempString;
+            tempString = "";
+            //Offset 1xC - 4 bytes
+            tempString = ByteArrToString(readBytes, 32 * i + 0x1C, 4);
+            tempName = tempName + tempString;
+            tempString = "";
+
+
+            hasSubEntry = true;
+            stackName.insert(0, tempName);
+            tempName = "";
+            //Nhay qua entry tiep theo
+            continue;
         }
 
         //Cac loai khac 0xF
         else {
+            //Neu co subentry
+            if (hasSubEntry) {
+         
+                //Lay 3 ki tu cuoi cung
+                if (entryStatus == 0x20) { //Neu la file
+                    mainEntry.name = stackName.substr(0, stackName.size() - 4);
+                    mainEntry.extensionName = stackName.substr(stackName.size() - 3);
+                }
+                else {
+                    mainEntry.name = stackName;
+
+                    mainEntry.extensionName = "";
+                }
+            
+            } //Khong cos subentry
+            else {
+                mainEntry.name = ByteArrToString(readBytes, 0x0, 8);
+                if (entryStatus == 0x20) { //Neu la file
+                    mainEntry.extensionName = stackName.substr(stackName.size() - 3);
+                }
+                else {
+                    mainEntry.extensionName = "";
+                }
+            }
+            stackName = "";
+
+
             //Decode loai
             //0 - read only
             //1 - hidden
@@ -326,17 +387,35 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSect
             //4 - directory
             //5 - archive - file
             //Chuyen hex sang nhi phan, tim vi tri cua bit 1 trong day nhi phan, vi tri = type
-            char types[] = {'R', 'H', 'S', 'V', 'D', 'A'};
+            char statuses[] = {'R', 'H', 'S', 'V', 'D', 'A', '0', '0'};
+          
+
             //tim vi tri xong xuat ra cai nay
-            string type;
+            string status, statusBin;
+            //Doc byte tai 0xB
+            statusBin = HexaToBinary(entryStatus);
+            for (int i = statusBin.size() - 1; i >= 0; i--)
+            {
+                if (statusBin[i] == '1') {
+                    int temp = statusBin.size() - 1 - i;
+                    status += statuses[temp];
+                  
+                }
+            }
 
             //Gan gia tri cua 
-            mainEntry.attribute = type;
-            mainEntry.fileSize = LittleEndian_HexaToDecimal(readBytes, 0x1C, 4);
-            
-
+            mainEntry.attribute = status;
+            mainEntry.startCluster = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1A, 2);
+            mainEntry.fileSize = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1C, 4);
 
         }
+
+        cout << "Ten file/thu muc: " << mainEntry.name << endl;
+        cout << "Ten extension: " << mainEntry.extensionName << endl;
+        cout << "Trang thai: " << mainEntry.attribute << endl;
+        cout << "Start cluster: " << mainEntry.startCluster << endl;
+        cout << "Size: " << mainEntry.fileSize << " bytes" << endl;
+        cout << endl;
     }
 
 }

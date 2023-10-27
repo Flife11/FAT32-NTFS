@@ -119,8 +119,8 @@ void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_resul
 
 // Cau truc DIRECTORY
 struct MAIN_ENTRY {
-	char name[10];             // Tên thư mục/tập tin
-	char extensionName[3];             // Tên thư mục/tập tin
+	string name;             // Tên thư mục/tập tin
+	string extensionName;             // Tên thư mục/tập tin
 	string attribute;              // Thuộc tính 
 	int startCluster;           // Cluster bắt đầu
 	int fileSize;               // Kích cỡ (tính theo byte)
