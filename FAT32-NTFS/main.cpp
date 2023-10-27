@@ -47,7 +47,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
 
     read_FAT_table(L"\\\\.\\E:", fat32, FAT_table);
     
-    readDirectory(0, fat32.Root, FAT_table, fat32, driver, " ");
+    readDirectory(0, fat32.Root, FAT_table, fat32, driver, 1);
     
     return 0;
 }

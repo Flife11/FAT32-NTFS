@@ -1,4 +1,5 @@
 ﻿#include "function.h"
+using namespace std;
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
 
@@ -281,14 +282,14 @@ int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
     return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
 }
 
-void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSector_FAT32 fat32, LPCWSTR drive1, string space) {
+void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level) {
     int clusterSizeByte = fat32.byte_per_sector * fat32.Sector_per_Cluster; //Moi sector co 32byte theo fat32
 
     //Tong entries
     int entriesCount = clusterSizeByte / 32;
     char* a = new char[clusterSizeByte];
     int firstSector = firstSectorIndex_Cluster(clusIndex, fat32);
-    fstream diskStream(drive1, std::ios::in);
+    fstream diskStream(driver, std::ios::in);
     //Bo qua sector dau - System data
     diskStream.seekg(firstSector * fat32.byte_per_sector, SEEK_SET);
     //Doc ca cluster
@@ -304,6 +305,8 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSect
     string stackName = "";
 
     bool hasSubEntry = false;
+
+    int countMainEntry = 0;
 
     for (int i = firstRecordIndex; i < entriesCount; i++)
     {
@@ -377,6 +380,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSect
                 }
             }
             stackName = "";
+            countMainEntry++;
 
 
             //Decode loai
@@ -405,17 +409,57 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* entryList, BootSect
 
             //Gan gia tri cua 
             mainEntry.attribute = status;
-            mainEntry.startCluster = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1A, 2);
+
+            //2 byte cao + 2 byte thap
+            int startClusterHigh = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x14, 2);
+            int startClusterLow = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1A, 2);
+
+            mainEntry.startCluster = startClusterHigh + startClusterLow;
             mainEntry.fileSize = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1C, 4);
 
-        }
 
-        cout << "Ten file/thu muc: " << mainEntry.name << endl;
-        cout << "Ten extension: " << mainEntry.extensionName << endl;
+
+        }
+        ////Ve cay thu muc
+        //for (int i = 0; i < level; i++) {
+
+        //}
+        /*cout << "Ten extension: " << mainEntry.extensionName << endl;
         cout << "Trang thai: " << mainEntry.attribute << endl;
         cout << "Start cluster: " << mainEntry.startCluster << endl;
         cout << "Size: " << mainEntry.fileSize << " bytes" << endl;
-        cout << endl;
+        cout << endl;*/
+       
+
+        for (int i = 0; i < level; i++)
+        {
+            
+            if (i == level - 1)
+            {
+                cout << "|__";
+
+            }
+            else {
+                cout << "|  ";
+            }
+            
+            
+        }
+        cout << mainEntry.name << " - " << mainEntry.fileSize << endl;
+
+        //La thu muc
+        if (entryStatus == 0x10) {
+
+            //Goi ham de quy xuong thu muc con
+            readDirectory(2, mainEntry.startCluster, FatTable, fat32, driver, level + 1);
+        }
+        
+
+
+        
+
+
+
     }
 
 }
