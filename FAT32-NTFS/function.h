@@ -17,7 +17,7 @@ using namespace std;
 /// <param name="readPoint">: bắt đầu đọc từ byte thứ readPoint của ổ drive</param>
 /// <param name="sector">: biến lưu nội dung sector</param>
 /// <returns></returns>
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]);
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int lenght);
 
 /// <summary>
 /// Hàm để chuyển 1 mảng con hexa (lưu ở little endian) sang decimal
@@ -111,7 +111,9 @@ void Print_BootSector(BootSector_FAT32 FAT32);
 /// <param name="drive">Tên Volume</param>
 /// <param name="fat32">Các thông số của bootsector đã đọc</param>
 /// <param name="FAT_table_result">Biến con trỏ lưu mảng kết quả của hàm này</param>
-void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result);
+int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result);
+
+
 //void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, BYTE* FAT_table_result);
 
 
@@ -135,5 +137,5 @@ int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
 
 void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
 void printTree(MAIN_ENTRY entry, int level);
-void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, string space);
+void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level);
 //void freeDirEntries(DIRECTORY* dir);

@@ -11,7 +11,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     //342258352128: from PhysicalDrive0
     //3221225472 =  786 432 * 8 * 512: from F
     LPCWSTR driver = L"\\\\.\\E:";
-    ReadSector(L"\\\\.\\E:", 0, sector);
+    ReadSector(L"\\\\.\\E:", 0, sector, 512);
     //cout << HexaToUnicodeUTF16(sector, 242, 22);//success
     //Read_VBR(sector); //sucess
 
