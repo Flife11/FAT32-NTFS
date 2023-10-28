@@ -1,5 +1,4 @@
 ﻿#include "function.h"
-using namespace std;
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
 
@@ -18,7 +17,7 @@ int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT ent
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
 
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int length) {
     int retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -41,15 +40,18 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE sector[512]) {
 
     SetFilePointerEx(device, li, NULL, FILE_BEGIN);//Set a Point to Read
 
-    if (!ReadFile(device, sector, 512, &bytesRead, NULL))
+    if (!ReadFile(device, sector, length, &bytesRead, NULL))
     {
-        printf("ReadFile: %u\n", GetLastError());
+        return 0;
+        //printf("ReadFile: %u\n", GetLastError());
     }
     else
     {
-        printf("Success!\n");
+        return 1;
+        //printf("Success!\n");
     }
 }
+
 
 unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int length) {
 
