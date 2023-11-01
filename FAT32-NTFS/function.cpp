@@ -573,42 +573,43 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 
 }
 
-//void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level)
-//{
-//    string content;
-//    int* Fat_table = NULL;
-//    int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
-//
-//    int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
-//    char* buffer = new char[bytes_per_Cluster];
-//    while (clusIndex != (int)0x0FFFFFFF)
-//    {
-//        long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
-//
-//        //Cai nay t hoi chatgpt xong no bao la drive1 dinh dang LPCWSTR nen can phai chuyen ve 
-//        // string de dung trong ifstream do a.
-//        // cos gi m coi lai thu 
-//        wstring wstr(drive1);
-//        string str(wstr.begin(), wstr.end());
-//
-//        ifstream IN;
-//        IN.open(str.c_str(), ios::binary);
-//        if (IN.is_open())
-//        {
-//            IN.seekg(data_offset, ios::beg);
-//            IN.read(buffer, fat32.bytes_per_sector);
-//        }
-//
-//
-//        content += buffer;
-//        if (FAT_size > clusIndex)
-//            clusIndex = Fat_table[clusIndex];
-//        else
-//            break;
-//    }
-//    cout << content;
-//    delete[]buffer;
-//}
+void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level)
+{
+    string content;
+    unsigned int* Fat_table = NULL;
+    unsigned int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
+
+    int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
+    char* buffer = new char[bytes_per_Cluster];
+    do
+    {
+        long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
+
+        //Cai nay t hoi chatgpt xong no bao la drive1 dinh dang LPCWSTR nen can phai chuyen ve 
+        // string de dung trong ifstream do a.
+        // cos gi m coi lai thu 
+        /*wstring wstr(drive1);
+        string str(wstr.begin(), wstr.end());*/
+
+        ifstream in;
+        in.open(drive1, ios::binary);
+        if (in.is_open())
+        {
+            in.seekg(data_offset, ios::beg);
+            in.read(buffer, fat32.byte_per_sector);
+        }
+
+
+        content += buffer;
+        if (FAT_size > clusIndex)
+            clusIndex = Fat_table[clusIndex];
+        else
+            break;
+    } while (clusIndex != 0x0FFFFFFF);
+
+    cout << content;
+    delete[]buffer;
+}
 
 
 
