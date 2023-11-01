@@ -325,7 +325,7 @@ void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSec
     //duyệt từng cluster theo danh sách liên kết 
     do 
     {
-        cout << "Chiem Cluster: " << startCluster << " - Sector (" << startSector + startCluster * fat32.Sector_per_Cluster << " -> " << startSector + startCluster * fat32.Sector_per_Cluster + 7 << "); ";
+        cout << "\n\t\tChiem Cluster: " << startCluster << " - Sector (" << startSector + startCluster * fat32.Sector_per_Cluster << " -> " << startSector + startCluster * fat32.Sector_per_Cluster + 7 << "); ";
         if (startCluster > fat_table_entries)
             break;
         startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không  //LỖI Ở FILE .DOCX STARTCLUSTER QUA LON
@@ -334,7 +334,7 @@ void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSec
 
 
     cout << endl;
-    cout << "So cluster file chiem: " << count << " (cluster)." << endl;
+    cout << "[So cluster file chiem: " << count << " (cluster).]" << endl;
     
     cout << endl;
 
