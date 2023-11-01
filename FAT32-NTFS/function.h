@@ -136,6 +136,6 @@ struct DUMMY {
 int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
 
 void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
-void printTree(MAIN_ENTRY entry, int level);
+void allocatedSectors(int startCluster, int* fatTable, BootSector_FAT32 fat32);
 void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level);
 //void freeDirEntries(DIRECTORY* dir);

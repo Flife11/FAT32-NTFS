@@ -274,6 +274,10 @@ int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result
     for (int i = 0; i < number_Of_entries; i++)
     {
         FAT_table_result[i] = LittleEndian_HexaToDecimal(readBytes, i * 4, 4);
+       /* cout << FAT_table_result[i] << " ";
+        if (i % 8 == 0) {
+            cout << endl;
+        }*/
     }
 
     return number_Of_entries;
@@ -284,6 +288,42 @@ int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
     //Sector dau tien cua DATA (RDET)
     int dataFirstSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT;
     return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
+}
+
+void allocatedSectors(int startCluster, int* fatTable, BootSector_FAT32 fat32) {
+    //Start cluster = Phan tu FAT
+    //Phan tu FAT bat dau dem tu 0....
+    int fatOffset = fat32.Reserved_Sector + (startCluster + 1) * fat32.byte_per_sector;
+    //lay so sector dau cua vung data = Sb + Nf * Sf + SRDET
+    int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
+    cout << "DAta bat dau tu" << dataSector << endl;
+    
+
+    int startSector = fat32.byte_per_sector * (startCluster - fat32.Root); //Tru di 2 sector dau truoc rdet
+
+    cout << " " << startSector << " ";
+
+    //LAm sao de doc cai bang FAT (Bang FAT trong nay bang null)
+
+    BYTE* readBytes = new BYTE[fat32.Sector_per_FAT * fat32.byte_per_sector];
+    readBytes = (BYTE*)fatTable;
+    int i = 0;
+    int count = 1;
+    while (true) {
+        //Moi lan doc 4 byte
+        int fatEntry = LittleEndian_HexaToDecimal(readBytes, fatOffset * 4 * i, 4);
+        if (fatEntry == 0xFFFFFFFF) {
+            return;
+        }
+        else {
+            count++;
+            cout << startSector + count << " ";
+        }
+        i++;
+    }
+
+    cout << endl;
+
 }
 
 void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level) {
@@ -454,10 +494,13 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
             
             
         }
-        cout << mainEntry.name << " - " << mainEntry.fileSize << endl;
+        cout << mainEntry.name << " - " << mainEntry.fileSize;
+        allocatedSectors(mainEntry.startCluster, FatTable, fat32);
+
+
 
         ////-----------------------------------------khúc này t code-------XEM LẠI----------------
-        if (entryStatus == 0x20)
+        /*if (entryStatus == 0x20)
         {
             string loaifile;
             long start_pos = mainEntry.name.length() - 3;
@@ -479,7 +522,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
             }
             cout << "Noi dung file: ";
             readContentOfFile(fat32, mainEntry.startCluster, driver, level);
-        }
+        }*/
         ////-----------------------------------------------------------------------------
 
         //La thu muc
@@ -490,7 +533,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
         }
 
         ////---------------------------------XEM LẠI----------------------------------------------------
-        else
+        /*else
         {
             for (int i = 0; i < level; i++)
             {
@@ -505,7 +548,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
                 }
             }
             cout << "Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
-        }
+        }*/
 
 
         
@@ -516,42 +559,42 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
 
 }
 
-void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level)
-{
-    string content;
-    int* Fat_table = NULL;
-    int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
-
-    int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
-    char* buffer = new char[bytes_per_Cluster];
-    while (clusIndex != (int)0x0FFFFFFF)
-    {
-        long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
-
-        //Cai nay t hoi chatgpt xong no bao la drive1 dinh dang LPCWSTR nen can phai chuyen ve 
-        // string de dung trong ifstream do a.
-        // cos gi m coi lai thu 
-        wstring wstr(drive1);
-        string str(wstr.begin(), wstr.end());
-
-        ifstream IN;
-        IN.open(str.c_str(), ios::binary);
-        if (IN.is_open())
-        {
-            IN.seekg(data_offset, ios::beg);
-            IN.read(buffer, fat32.bytes_per_sector);
-        }
-
-
-        content += buffer;
-        if (FAT_size > clusIndex)
-            clusIndex = Fat_table[clusIndex];
-        else
-            break;
-    }
-    cout << content;
-    delete[]buffer;
-}
+//void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level)
+//{
+//    string content;
+//    int* Fat_table = NULL;
+//    int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
+//
+//    int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
+//    char* buffer = new char[bytes_per_Cluster];
+//    while (clusIndex != (int)0x0FFFFFFF)
+//    {
+//        long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
+//
+//        //Cai nay t hoi chatgpt xong no bao la drive1 dinh dang LPCWSTR nen can phai chuyen ve 
+//        // string de dung trong ifstream do a.
+//        // cos gi m coi lai thu 
+//        wstring wstr(drive1);
+//        string str(wstr.begin(), wstr.end());
+//
+//        ifstream IN;
+//        IN.open(str.c_str(), ios::binary);
+//        if (IN.is_open())
+//        {
+//            IN.seekg(data_offset, ios::beg);
+//            IN.read(buffer, fat32.bytes_per_sector);
+//        }
+//
+//
+//        content += buffer;
+//        if (FAT_size > clusIndex)
+//            clusIndex = Fat_table[clusIndex];
+//        else
+//            break;
+//    }
+//    cout << content;
+//    delete[]buffer;
+//}
 
 
 
