@@ -258,13 +258,15 @@ void Print_BootSector(BootSector_FAT32 FAT32)
     cout << "\tSector bat dau cu RDET: " << FAT32.Root << endl;
 }
 
-int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result)
+int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_table_result)
 {
     if (FAT_table_result != NULL)
         delete[] FAT_table_result;
+
     int Fat_table_size = fat32.byte_per_sector * fat32.Sector_per_FAT;
     int number_Of_entries = Fat_table_size / 4;
-    FAT_table_result = new int[number_Of_entries];
+
+    FAT_table_result = new unsigned int[number_Of_entries];
     ifstream disk(driver);
     char* buffer = new char[Fat_table_size];
     disk.seekg(fat32.Reserved_Sector * fat32.byte_per_sector, 0);
@@ -290,43 +292,55 @@ int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
     return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
 }
 
-void allocatedSectors(int startCluster, int* fatTable, BootSector_FAT32 fat32) {
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32) {
     //Start cluster = Phan tu FAT
     //Phan tu FAT bat dau dem tu 0....
-    int fatOffset = fat32.Reserved_Sector + (startCluster + 1) * fat32.byte_per_sector;
+    //int fatOffset = fat32.Reserved_Sector + (startCluster + 1) * fat32.byte_per_sector;
     //lay so sector dau cua vung data = Sb + Nf * Sf + SRDET
+
+
     int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
-    cout << "DAta bat dau tu" << dataSector << endl;
+    //cout << endl;
+    //cout << "vung data bat dau tu" << dataSector << endl;
     
 
-    int startSector = fat32.byte_per_sector * (startCluster - fat32.Root); //Tru di 2 sector dau truoc rdet
-
+    unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (startCluster - 2); //Tru di 2 sector dau truoc rdet
     cout << " " << startSector << " ";
 
     //LAm sao de doc cai bang FAT (Bang FAT trong nay bang null)
+    unsigned int fat_table_entries = fat32.byte_per_sector * fat32.Sector_per_FAT / 4;
+    int count = 0;
+    unsigned int curent_Sector = startSector;
 
-    BYTE* readBytes = new BYTE[fat32.Sector_per_FAT * fat32.byte_per_sector];
-    readBytes = (BYTE*)fatTable;
-    int i = 0;
-    int count = 1;
-    while (true) {
-        //Moi lan doc 4 byte
-        int fatEntry = LittleEndian_HexaToDecimal(readBytes, fatOffset * 4 * i, 4);
-        if (fatEntry == 0xFFFFFFFF) {
-            return;
-        }
-        else {
-            count++;
-            cout << startSector + count << " ";
-        }
-        i++;
-    }
 
+
+    
+
+    //while (startCluster != 0x0FFFFFFF) {
+    //    count++;
+    //    //cout << " " << startSector + startCluster * fat32.Sector_per_Cluster << ", " << startSector + startCluster * fat32.Sector_per_Cluster + 1;
+    //    cout << " " << startSector + startCluster * fat32.Sector_per_Cluster << ", " << startSector + startCluster * fat32.Sector_per_Cluster + 1;
+    //}
+
+    //duyệt từng cluster theo danh sách liên kết 
+    do 
+    {
+        cout << "Chiem Cluster: " << startCluster << " - Sector (" << startSector + startCluster * fat32.Sector_per_Cluster << " -> " << startSector + startCluster * fat32.Sector_per_Cluster + 7 << "); ";
+        if (startCluster > fat_table_entries)
+            break;
+        startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không  //LỖI Ở FILE .DOCX STARTCLUSTER QUA LON
+        count++;
+    } while (startCluster != 0x0FFFFFFF);
+
+
+    cout << endl;
+    cout << "So cluster file chiem: " << count << " (cluster)." << endl;
+    
     cout << endl;
 
 }
 
-void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level) {
+void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level) {
     int clusterSizeByte = fat32.byte_per_sector * fat32.Sector_per_Cluster; //Moi sector co 32byte theo fat32
 
     //Tong entries
@@ -494,7 +508,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSecto
             
             
         }
-        cout << mainEntry.name << " - " << mainEntry.fileSize;
+        cout << mainEntry.name << " - " << mainEntry.fileSize << "(starCluster " << mainEntry.startCluster << ") ";
         allocatedSectors(mainEntry.startCluster, FatTable, fat32);
 
 

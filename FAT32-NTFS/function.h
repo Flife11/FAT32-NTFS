@@ -111,7 +111,7 @@ void Print_BootSector(BootSector_FAT32 FAT32);
 /// <param name="drive">Tên Volume</param>
 /// <param name="fat32">Các thông số của bootsector đã đọc</param>
 /// <param name="FAT_table_result">Biến con trỏ lưu mảng kết quả của hàm này</param>
-int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, int* FAT_table_result);
+int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_table_result);
 
 
 //void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, BYTE* FAT_table_result);
@@ -124,8 +124,8 @@ struct MAIN_ENTRY {
 	string name;             // Tên thư mục/tập tin
 	string extensionName;             // Tên thư mục/tập tin
 	string attribute;              // Thuộc tính 
-	int startCluster;           // Cluster bắt đầu
-	int fileSize;               // Kích cỡ (tính theo byte)
+	unsigned int startCluster;           // Cluster bắt đầu
+	unsigned int fileSize;               // Kích cỡ (tính theo byte)
 	//DIRECTORY* next;            // Trỏ đến thư mục/ tập tin tiếp theo
 	//DIRECTORY* dir;             // Trỏ đến thư mục con
 };
@@ -135,7 +135,7 @@ struct DUMMY {
 };
 int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
 
-void readDirectory(int firstRecordIndex, int clusIndex, int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
-void allocatedSectors(int startCluster, int* fatTable, BootSector_FAT32 fat32);
-void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level);
+void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32);
+void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1, int level);
 //void freeDirEntries(DIRECTORY* dir);
