@@ -46,10 +46,7 @@ int main(int argc, char** argv) //file main tui test thoi, mn cứ xóa nhe
     unsigned int* FAT_table = nullptr;
 
     read_FAT_table(L"\\\\.\\E:", fat32, FAT_table);
-    if (!FAT_table)
-        cout << "Table null";
-    for (int i = 0; i < 10; i++)
-        cout << FAT_table[i] << ' ';
+    
     
     readDirectory(0, fat32.Root, FAT_table, fat32, driver, 1);
     
