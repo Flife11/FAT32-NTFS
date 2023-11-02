@@ -327,7 +327,7 @@ void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSec
         if (startCluster > fat_table_entries) //Vuot qua gioi han
             break;
         cout << "(" << startSector
-            << "-" << startSector + 7 << "); ";
+            << "-" << startSector + fat32.Sector_per_Cluster - 1 << "); ";
         
         startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không
         count++;
