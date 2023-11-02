@@ -12,7 +12,7 @@ int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT ent
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
 
-
+vector <pair<MAIN_ENTRY, int>> FAT32_EntryList;  //Dung cho truy xuat
 
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
@@ -78,7 +78,7 @@ string ByteArrToString(BYTE sector[], int startIndex, int length)
     for (int i = 0; i < length; ++i)
     {
         //str += static_cast<char>(sector[i + startIndex]); 
-        //Cap nhat de loai bo chen ki tu '\0' va ki tu trong 0xFF
+            //CAP NHAT de loai bo chen ki tu '\0' va ki tu trong 0xFF
         char c = static_cast<char>(sector[i + startIndex]);
         if (c != '\0' && sector[i + startIndex] != 0xFF)
         {
@@ -123,6 +123,7 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
         cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
         // xuống dòng cho dễ nhìn
         //------------------------------------------------------------
+       
         if ((i + 1) % 16 == 0)
             cout << endl;
         //----------------------------------------------------------------
@@ -298,7 +299,7 @@ int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
     return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
 }
 
-void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32, int level) {
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32) {
     //Start cluster = Phan tu FAT
     //Phan tu FAT bat dau dem tu 0....
     //int fatOffset = fat32.Reserved_Sector + (startCluster + 1) * fat32.byte_per_sector;
@@ -316,23 +317,9 @@ void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSec
     int count = 0;
     unsigned int curent_Sector = startSector;
 
-
-    //while (startCluster != 0x0FFFFFFF) {
-    //    count++;
-    //    //cout << " " << startSector + startCluster * fat32.Sector_per_Cluster << ", " << startSector + startCluster * fat32.Sector_per_Cluster + 1;
-    //    cout << " " << startSector + startCluster * fat32.Sector_per_Cluster << ", " << startSector + startCluster * fat32.Sector_per_Cluster + 1;
-    //}
-    /*cout << " Cluster: " << startCluster << " - Sector (" << startSector
-        << " -> " << startSector + 7 << ") " << endl;
-    
-    startCluster = fatTable[startCluster];
-    count++;*/
     //duyệt từng cluster theo danh sách liên kết 
     cout << " - Sector: ";
-    /*for (int i = 0; i < level; i++)
-    {
-        cout << " ";
-    }*/
+    
     while (startCluster != 0x0FFFFFFF)
     {
         if (startCluster > fat_table_entries) //Vuot qua gioi han
@@ -340,18 +327,12 @@ void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSec
         cout << "(" << startSector
             << "-" << startSector + 7 << "); ";
         
-        startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không  //LỖI Ở FILE .DOCX STARTCLUSTER QUA LON
+        startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không
         count++;
         // Calculate the starting sector of the next cluster
         startSector = dataSector + fat32.Sector_per_Cluster * (startCluster - fat32.Root);
     } 
     cout << endl;
-
-
-    /*cout << endl;
-    cout << "[So cluster file chiem: " << count << " (cluster).]" << endl;
-    
-    cout << endl;*/
 
 }
 
@@ -485,6 +466,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 
             //Gan gia tri cua 
             mainEntry.attribute = status;
+            mainEntry.attributeInHex = entryStatus;
 
             //2 byte cao + 2 byte thap
             int startClusterHigh = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x14, 2);
@@ -498,15 +480,8 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
         }
      
        
-       /* cout << mainEntry.name << " - " << mainEntry.fileSize << endl;
-
-        cout << "Ten extension: " << mainEntry.extensionName << endl;
-        cout << "Trang thai: " << mainEntry.attribute << endl;
-        cout << "Start cluster: " << mainEntry.startCluster << endl;
-        cout << "Size: " << mainEntry.fileSize << " bytes" << endl;
-        cout << endl;
-       */
-
+        FAT32_EntryList.push_back(make_pair(mainEntry, FAT32_EntryList.size()));
+        cout << "[" << FAT32_EntryList.size() - 1 << "] ";
         for (int i = 0; i < level; i++)
         {
             
@@ -521,50 +496,9 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
             
             
         }
-        //"(starCluster " << mainEntry.startCluster << ") "
+       
         cout << mainEntry.name << " - " << mainEntry.attribute << " - " << mainEntry.fileSize << " bytes";
-        allocatedSectors(mainEntry.startCluster, FatTable, fat32, level);
-
-
-
-        ////----------------------------------------- là tập tin----------------
-        if (entryStatus == 0x20)
-        {
-            if (mainEntry.extensionName == "txt" || mainEntry.extensionName == "TXT")// file text
-            {
-                for (int i = 0; i < level; i++)
-                {
-
-                    if (i == level - 1)
-                    {
-                        cout << "|  ";
-
-                    }
-                    else {
-                        cout << "|  ";
-                    }
-                }
-                cout << "Noi dung file: ";
-                readContentOfFile(fat32, mainEntry.startCluster, driver, level);
-            }
-            else// file khác
-            {
-                for (int i = 0; i < level; i++)
-                {
-
-                    if (i == level - 1)
-                    {
-                        cout << "|  ";
-
-                    }
-                    else {
-                        cout << "|  ";
-                    }
-                }
-                cout << "Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
-            }
-        }
-        ////-----------------------------------------------------------------------------
+        allocatedSectors(mainEntry.startCluster, FatTable, fat32);
 
         //La thu muc
         if (entryStatus == 0x10) {
@@ -573,77 +507,89 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
             readDirectory(2, mainEntry.startCluster, FatTable, fat32, driver, level + 1);
         }
 
-        
-
+ 
 
     }
 
 }
 
-void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1, int level)
+void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1)
 {
-    string content;
-    unsigned int* Fat_table = NULL;
-    unsigned int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
+     ////----------------------------------------- là tập tin----------------
+    bool viewable = false;
 
-    int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
-    //BYTE* buffer = new BYTE[bytes_per_Cluster];
-    BYTE* buffer = new BYTE[fat32.byte_per_sector];
-
-    do
+    if (entry.attributeInHex == 0x20)
     {
-        long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
-
-        //Cai nay t hoi chatgpt xong no bao la drive1 dinh dang LPCWSTR nen can phai chuyen ve 
-        // string de dung trong ifstream do a.
-        // cos gi m coi lai thu 
-        /*wstring wstr(drive1);
-        string str(wstr.begin(), wstr.end());*/
-
-        /*ifstream fin;
-        fin.open(drive1, ios::binary);
-        if (fin.is_open())
+        if (entry.extensionName == "txt" || entry.extensionName == "TXT")// file text
         {
-            fin.seekg(data_offset, ios::beg);
-            fin.read((char*)buffer, fat32.byte_per_sector);
-            fin.close();
-        }*/
-
-        int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
-
-        //Sector bat dau cua file do
-        unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (clusIndex - fat32.Root); //Tru di 2 sector dau truoc rdet
-        for (int i = 0; i < fat32.Sector_per_Cluster; i++)
-        {
-            ReadSector(drive1, (startSector + i) * fat32.byte_per_sector, buffer, fat32.byte_per_sector);
-            content += ByteArrToString(buffer, 0, fat32.byte_per_sector);
-
+               
+            cout << ">> Noi dung file: " << endl;
+            cout << "...Dang doc file" << endl;
+            viewable = true;
         }
+        else// file khác
+        {
+           
+            cout << ">> Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
+            return;
+        }
+    }
+    else {
+        cout << ">> Vui long chon file phu hop" << endl;
+
+    }
+        ////-----------------------------------------------------------------------------
+    if (viewable) {
+        string content;
+        unsigned int* Fat_table = NULL;
+        unsigned int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
+
+        int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
+        //BYTE* buffer = new BYTE[bytes_per_Cluster];
+        BYTE* buffer = new BYTE[fat32.byte_per_sector];
+
+        do
+        {
+            long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
+
+
+            int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
+
+            //Sector bat dau cua file do
+            unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (clusIndex - fat32.Root); //Tru di 2 sector dau truoc rdet
+            for (int i = 0; i < fat32.Sector_per_Cluster; i++)
+            {
+                ReadSector(drive1, (startSector + i) * fat32.byte_per_sector, buffer, fat32.byte_per_sector);
+                content += ByteArrToString(buffer, 0, fat32.byte_per_sector);
+
+            }
 
 
 
-        //cout << buffer;
-        if (FAT_size > clusIndex)
-            clusIndex = Fat_table[clusIndex];
-        else
-            break;
-    } while (clusIndex != 0x0FFFFFFF);
-    cout << content << endl;
+            //cout << buffer;
+            if (FAT_size > clusIndex)
+                clusIndex = Fat_table[clusIndex];
+            else
+                break;
+        } while (clusIndex != 0x0FFFFFFF);
+        cout << content << endl;
 
-    //Ghi nội dung đọc được ra 1 file: do màn hình console không in ra các kí tự unicode có dấu được
-    ofstream out;
-    out.open("E:\\test_write.txt", ios::app);
-    out << content << endl;
-    out.close();
-
-
-
-    //giải phóng vùng nhớ.
-    delete[]buffer;
+        //giải phóng vùng nhớ.
+        delete[]buffer;
+    }
+    
 }
 
 
 
+void chooseFileFAT(BootSector_FAT32 fat32, LPCWSTR drive1) {
+    int choice = 0;
+    cout << ">> Chon file muon truy xuat [0, 1...]: ";
+    cin >> choice;
 
+    readContentOfFile(FAT32_EntryList[choice].first, fat32, FAT32_EntryList[choice].first.startCluster, drive1);
+
+
+}
 
 

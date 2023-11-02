@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
-
+#include <vector>
 using namespace std;
 
 //--------------------------------------KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32)------------------------------------------
@@ -122,21 +122,19 @@ int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_ta
 
 // Cau truc DIRECTORY
 struct MAIN_ENTRY {
-	string name;             // Tên thư mục/tập tin
-	string extensionName;             // Tên thư mục/tập tin
-	string attribute;              // Thuộc tính 
-	unsigned int startCluster;           // Cluster bắt đầu
-	unsigned int fileSize;               // Kích cỡ (tính theo byte)
-	//DIRECTORY* next;            // Trỏ đến thư mục/ tập tin tiếp theo
-	//DIRECTORY* dir;             // Trỏ đến thư mục con
+	string name;					// Tên thư mục/tập tin
+	string extensionName;           // Ten duoi tap tin
+	string attribute;			    // Thuộc tính 
+	int attributeInHex;				//Thuoc tinh duoi dang hexa
+	unsigned int startCluster;      // Cluster bắt đầu
+	unsigned int fileSize;          // Kích cỡ (tính theo byte)
+	//DIRECTORY* next;				// Trỏ đến thư mục/ tập tin tiếp theo
+	//DIRECTORY* dir;				// Trỏ đến thư mục con
 };
 
-struct DUMMY {
-
-};
 int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
 
 void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
-void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32, int level);
-void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1, int level);
-//void freeDirEntries(DIRECTORY* dir);
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32);
+void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1);
+void chooseFileFAT(BootSector_FAT32 fat32, LPCWSTR drive1);
