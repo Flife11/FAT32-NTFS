@@ -527,10 +527,10 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 
 
 
-        ////-----------------------------------------khúc này t code-------XEM LẠI----------------
+        ////----------------------------------------- là tập tin----------------
         if (entryStatus == 0x20)
         {
-            if (mainEntry.extensionName == "txt" || mainEntry.extensionName == "TXT")
+            if (mainEntry.extensionName == "txt" || mainEntry.extensionName == "TXT")// file text
             {
                 for (int i = 0; i < level; i++)
                 {
@@ -547,7 +547,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
                 cout << "Noi dung file: ";
                 readContentOfFile(fat32, mainEntry.startCluster, driver, level);
             }
-            else
+            else// file khác
             {
                 for (int i = 0; i < level; i++)
                 {
@@ -573,12 +573,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
             readDirectory(2, mainEntry.startCluster, FatTable, fat32, driver, level + 1);
         }
 
-        ////---------------------------------XEM LẠI----------------------------------------------------
         
-
-
-        
-        //------------------------------------------------------------------------------------
 
 
     }
@@ -634,13 +629,16 @@ void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR d
             break;
     } while (clusIndex != 0x0FFFFFFF);
     cout << content << endl;
-    cout << endl;
 
     //Ghi nội dung đọc được ra 1 file: do màn hình console không in ra các kí tự unicode có dấu được
     ofstream out;
     out.open("E:\\test_write.txt", ios::app);
     out << content << endl;
     out.close();
+
+
+
+    //giải phóng vùng nhớ.
     delete[]buffer;
 }
 
