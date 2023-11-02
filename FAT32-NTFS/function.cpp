@@ -528,29 +528,42 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 
 
         ////-----------------------------------------khúc này t code-------XEM LẠI----------------
-       /* if (entryStatus == 0x20)
+        if (entryStatus == 0x20)
         {
-            string loaifile;
-            long start_pos = mainEntry.name.length() - 3;
-            loaifile = mainEntry.name.substr(start_pos, 4);
-            if (loaifile == "txt")
+            if (mainEntry.extensionName == "txt" || mainEntry.extensionName == "TXT")
             {
                 for (int i = 0; i < level; i++)
                 {
 
                     if (i == level - 1)
                     {
-                        cout << "   ";
+                        cout << "|  ";
 
                     }
                     else {
-                        cout << "   ";
+                        cout << "|  ";
                     }
                 }
+                cout << "Noi dung file: ";
+                readContentOfFile(fat32, mainEntry.startCluster, driver, level);
             }
-            cout << "Noi dung file: ";
-            readContentOfFile(fat32, mainEntry.startCluster, driver, level);
-        }*/
+            else
+            {
+                for (int i = 0; i < level; i++)
+                {
+
+                    if (i == level - 1)
+                    {
+                        cout << "|  ";
+
+                    }
+                    else {
+                        cout << "|  ";
+                    }
+                }
+                cout << "Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
+            }
+        }
         ////-----------------------------------------------------------------------------
 
         //La thu muc
@@ -561,22 +574,7 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
         }
 
         ////---------------------------------XEM LẠI----------------------------------------------------
-        /*else
-        {
-            for (int i = 0; i < level; i++)
-            {
-
-                if (i == level - 1)
-                {
-                    cout << "   ";
-
-                }
-                else {
-                    cout << "   ";
-                }
-            }
-            cout << "Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
-        }*/
+        
 
 
         
@@ -587,14 +585,16 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 
 }
 
-void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, int level)
+void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1, int level)
 {
     string content;
     unsigned int* Fat_table = NULL;
     unsigned int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
 
     int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
-    char* buffer = new char[bytes_per_Cluster];
+    //BYTE* buffer = new BYTE[bytes_per_Cluster];
+    BYTE* buffer = new BYTE[fat32.byte_per_sector];
+
     do
     {
         long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
@@ -605,23 +605,40 @@ void readContentOfFile(BootSector_FAT32 fat32, int clusIndex, LPCWSTR drive1, in
         /*wstring wstr(drive1);
         string str(wstr.begin(), wstr.end());*/
 
-        ifstream fin;
+        /*ifstream fin;
         fin.open(drive1, ios::binary);
         if (fin.is_open())
         {
             fin.seekg(data_offset, ios::beg);
-            fin.read(buffer, fat32.byte_per_sector);
+            fin.read((char*)buffer, fat32.byte_per_sector);
+            fin.close();
+        }*/
+
+        int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
+
+        //Sector bat dau cua file do
+        unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (clusIndex - fat32.Root); //Tru di 2 sector dau truoc rdet
+        for (int i = 0; i < fat32.Sector_per_Cluster; i++)
+        {
+            ReadSector(drive1, (startSector + i) * fat32.byte_per_sector, buffer, fat32.byte_per_sector);
+            content += ByteArrToString(buffer, 0, fat32.byte_per_sector);
+
         }
 
 
-        content += buffer;
+
+        //cout << buffer;
         if (FAT_size > clusIndex)
             clusIndex = Fat_table[clusIndex];
         else
             break;
     } while (clusIndex != 0x0FFFFFFF);
-
-    cout << content;
+    cout << content << endl;
+    cout << endl;
+    ofstream out;
+    out.open("E:\\test_write.txt", ios::app);
+    out << content << endl;
+    out.close();
     delete[]buffer;
 }
 
