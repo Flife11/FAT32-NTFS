@@ -82,14 +82,14 @@ void Read_VBR(BYTE sector[]);
 /// </summary>
 struct BootSector_FAT32
 {
-	int byte_per_sector; //Số byte của 1 sector					(offset B - chiếm 2 bytes)
-	int Sector_per_Cluster; //Số Sector của 1 Cluster	[Sc]	(offset D - chiếm 1 byte)
-	int Reserved_Sector; // Số sector của BootSector	[SB]	(offset E - chiếm 2 bytes)
-	int No_FAT; // Số bảng FAT							[NF]	(offset 10 - 1 byte)
-	int RDET_Entries; //Số Entrys của RDET, thường = 0	[SRDET]	(offset 11 - 2 bytes)
-	long Total_Sector;//Tổng số sector (kích thức Volume)[Sv]	(offset 20 - 4 bytes)
-	int Sector_per_FAT;//Số sector mỗi bảng FAT			[Sf]	(offset 24 - 4 bytes)
-	int Root; //Cluster bắt đầu của RDET						(offset 2C - 4 bytes) 
+	int byte_per_sector;	//	Số byte của 1 sector						(offset B - chiếm 2 bytes)
+	int Sector_per_Cluster;	//	Số Sector của 1 Cluster				[Sc]	(offset D - chiếm 1 byte)
+	int Reserved_Sector;	//	Số sector của BootSector			[SB]	(offset E - chiếm 2 bytes)
+	int No_FAT;				//	Số bảng FAT							[NF]	(offset 10 - 1 byte)
+	int RDET_Entries;		//	Số Entrys của RDET, thường = 0		[SRDET]	(offset 11 - 2 bytes)
+	long Total_Sector;		//	Tổng số sector (kích thức Volume)	[Sv]	(offset 20 - 4 bytes)
+	int Sector_per_FAT;		//	Số sector mỗi bảng FAT				[Sf]	(offset 24 - 4 bytes)
+	int Root;				//	Cluster bắt đầu của RDET					(offset 2C - 4 bytes) 
 };
 
 /// <summary>
