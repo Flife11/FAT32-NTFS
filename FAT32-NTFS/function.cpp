@@ -635,6 +635,8 @@ void readContentOfFile(BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR d
     } while (clusIndex != 0x0FFFFFFF);
     cout << content << endl;
     cout << endl;
+
+    //Ghi nội dung đọc được ra 1 file: do màn hình console không in ra các kí tự unicode có dấu được
     ofstream out;
     out.open("E:\\test_write.txt", ios::app);
     out << content << endl;
