@@ -247,7 +247,7 @@ BootSector_FAT32 read_BootSector(BYTE* bootSector_ptr)
 
 void Print_BootSector(BootSector_FAT32 FAT32)
 {
-    cout << "----------BOOTSECTOR----------" << endl;
+    cout << "----------------------------------------BOOTSECTOR----------------------------------------" << endl;
     cout << "\tFAT32" << endl;
     cout << "\tSo bytes tren 1 Sector: " << FAT32.byte_per_sector << " (bytes)." << endl;
     cout << "\tSo sector moi cluster (Sc): " << FAT32.Sector_per_Cluster << "(sectors)." << endl;
@@ -257,6 +257,8 @@ void Print_BootSector(BootSector_FAT32 FAT32)
     cout << "\tTong so sector (Sv): " << FAT32.Total_Sector << "(sectors)." << endl;
     cout << "\tSo sector moi bang FAT (SF): " << FAT32.Sector_per_FAT << "(sectors)." << endl;
     cout << "\tSector bat dau cu RDET: " << FAT32.Root << endl;
+    cout << "------------------------------------------------------------------------------------------" << endl;
+
 }
 
 int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_table_result) {
@@ -572,7 +574,10 @@ void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int cl
             else
                 break;
         } while (clusIndex != 0x0FFFFFFF);
-        cout << content << endl;
+        if (content.empty())
+            cout << "File rong." << endl;
+        else
+            cout << content << endl;
 
         //giải phóng vùng nhớ.
         delete[]buffer;
