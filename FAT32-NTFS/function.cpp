@@ -1,4 +1,8 @@
 ﻿#include "function.h"
+//-------------------------------------- BIẾN TOÀN CỤC CHUNG ---------------------------------------------------
+
+LPCWSTR dirName; //Tên ổ đĩa
+
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO NTFS ---------------------------------------------------
 
@@ -8,6 +12,11 @@ unsigned long long NTFS_sector_startIndex_logic = 0; //Sector bắt đầu của
 unsigned long long NTFS_numberOfSector_logic = 0; //Số sector của ổ đĩa logic.
 unsigned long long NTFS_MFTcluster_startIndex = 0; //Cluster bắt đầu của MFT.
 int NTFS_MTF_entry_size = 0; //Kích thước của một bản ghi MFT (MFT entry). Đơn vị tính là byte.
+long long NTFS_MFT_size = 0; //Kích thước của MFT
+int NTFS_root_directory_ID = 0; //ID của thư mục gốc
+map<long long, vector<pair<long long, string> > > NTFS_Child_List;
+map<long long,vector<pair<string, string> >>  NTFS_Child_Data; //first: tên file/folder, second: data bên trong (nếu là file)
+
 
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
@@ -143,6 +152,36 @@ string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length) {
     return unicode;
 }
 
+bool IsNTFS(BYTE* sector) {
+    string dirNamestring = "";
+    cout << "Nhap ten o dia (VD: G): ";
+    cin >> dirNamestring;
+
+    // Xử lý chuyển từ tên ổ đĩa sang kiểu LPCWSTR để truyền vào hàm ReadSector
+    dirNamestring.push_back(':');
+    dirNamestring.insert(0, "\\\\.\\");
+
+    wstring stemp = wstring(dirNamestring.begin(), dirNamestring.end());
+    const wchar_t* dirNametemp = stemp.c_str();
+    size_t stringLength = wcslen(dirNametemp) + 1;
+    wchar_t* wideString = new wchar_t[stringLength];
+    wcscpy_s(wideString, stringLength, dirNametemp);
+    dirName = wideString;
+    //tới chỗ này hoy :0
+
+
+    ReadSector(dirName, 0, sector, 512);
+
+    //Nếu là hệ thống NTFS
+    if (ByteArrToString(sector, 0x03, 8) == "NTFS    ") {
+        return true;
+    }
+
+    //Nếu là FAT32
+    else {
+        return false;
+    }
+}
 //------------------------------------- KHU VỰC HÀM CHO NTFS -------------------------------------------------------
 
 int MFTEntry_Size(BYTE sector_VBR[]) {
@@ -228,6 +267,162 @@ void Read_VBR(BYTE sector[]) {
 
     cout << "************************************************************" << endl;
 }
+
+bool Read_Entry(unsigned long long Start_Address_MFT)
+{
+    BYTE* sector = new BYTE[NTFS_MTF_entry_size];
+    bool readable = ReadSector(dirName, Start_Address_MFT, sector, NTFS_MTF_entry_size);
+    string File_Name = "";
+    int Parent_ID = 0;
+    
+    
+    //cout << LittleEndian_HexaToDecimal(sector, 0, 4) << "\n";
+    
+    int First_Attribute_Offet = LittleEndian_HexaToDecimal(sector, 0x14, 2);
+    long long ID = LittleEndian_HexaToDecimal(sector, 0x2C, 4);
+    // Duyệt qua các attribute.
+    int Attribute_Index = LittleEndian_HexaToDecimal(sector, 0x28, 2);
+    int current_Index = First_Attribute_Offet;
+    for (int i = 0; i < Attribute_Index; ++i) {
+        int Attribute_Type = LittleEndian_HexaToDecimal(sector, current_Index, 4);
+        if (Attribute_Type == -1)
+            return 1;
+        int Attribute_Size = LittleEndian_HexaToDecimal(sector, current_Index + 4, 4);
+        int Attribute_Data_Offset = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
+        int Nonresident_Flag = LittleEndian_HexaToDecimal(sector, current_Index + 8, 1);        
+
+        if (Nonresident_Flag == 0) {
+            // Xử lí resident ở đây
+            
+                // Đây là attribute $STANDARD_INFORMATION
+            if (Attribute_Type == 16) {
+                int flag = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 32, 4);
+                
+                if ((((flag & 2) != 0) || ((flag & 4) != 0) || ((flag & 6) != 0)/* || ((flag & 32) != 0)*/) && (NTFS_MFT_size != 0)) return 1;
+            }
+
+                // Đây là attribute $FILE_NAME
+            if (Attribute_Type == 48) {
+                int File_Name_Length = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset + 64, 1);
+                Parent_ID = LittleEndian_HexaToDecimal(sector, current_Index + Attribute_Data_Offset, 6);
+                if (NTFS_root_directory_ID == 0)
+                    NTFS_root_directory_ID = Parent_ID;
+                File_Name = HexaToUnicodeUTF16(sector, current_Index + Attribute_Data_Offset + 66, 2 * File_Name_Length);
+                if (File_Name.length() > 0 && File_Name[0] != '$') {
+                    NTFS_Child_List[Parent_ID].push_back({ ID, File_Name });
+                    NTFS_Child_Data[Parent_ID].push_back({ File_Name,"" });
+                }
+                    
+            }
+
+                // Đây là attribute $DATA
+            if (Attribute_Type == 128) {
+                // Lấy MFT size
+                if (NTFS_MFT_size == 0) { // Nếu NTFS_MFT_size =0 => chưa đọc NTFS_MFT_size, là đang ở $MFT => chỉ lấy size rồi skip
+                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                }
+                else {
+                    if (File_Name.find(".txt") != string::npos) {
+                        int Data_Length = LittleEndian_HexaToDecimal(sector,current_Index + 16, 4);
+                        int Data_Start_Index = LittleEndian_HexaToDecimal(sector, current_Index + 20, 2);
+                        string Data = ByteArrToString(sector, current_Index + Data_Start_Index, Data_Length);
+                        NTFS_Child_Data[Parent_ID][NTFS_Child_Data[Parent_ID].size()-1].second = Data;
+                    }
+                }
+            }
+        }
+        else {
+            // Xử lí non-resident ở đây
+            
+                // Đây là attribute $DATA
+            if (Attribute_Type == 128) {
+                // Lấy MFT size
+                if (NTFS_MFT_size == 0) { // Nếu NTFS_MFT_size =0 => chưa đọc NTFS_MFT_size, là đang ở $MFT => chỉ lấy size rồi skip
+                    NTFS_MFT_size = LittleEndian_HexaToDecimal(sector, current_Index + 48, 8);
+                }
+            }
+        }
+        current_Index += Attribute_Size;
+    }
+
+    //Giải phóng vùng nhớ
+    delete[] sector;
+
+    return 1;
+}
+
+void Folder_Structure_BFS(long long node, int level)
+{
+    int n = NTFS_Child_List[node].size();
+    for (int i = 0; i < n; ++i) {
+        pair<long long, string> u = NTFS_Child_List[node][i];
+        for (int j = 0; j < level ; ++j) {
+            if (j == level  - 1)
+                cout << "|__";
+            else
+                cout << "|  ";
+        }
+        cout << u.second << " [" << node << "-" << i << "]" << endl;
+        Folder_Structure_BFS(u.first, level + 1);
+    }
+}
+
+void Read_MFT() {
+    // Tính sector bắt đầu của MFT
+    unsigned long long Start_Sector_MFT = NTFS_MFTcluster_startIndex * NTFS_sector_per_cluster;
+    // Tính vị trí bắt đầu của MFT dựa vào số thứ tự sector
+    unsigned long long Start_Address_MFT = Start_Sector_MFT * NTFS_sector_size;
+
+    long long size = 0;
+    do {
+        Read_Entry(Start_Address_MFT);
+        Start_Address_MFT += NTFS_MTF_entry_size;
+        size += NTFS_MTF_entry_size;   
+    } while (size < NTFS_MFT_size);
+   
+    cout << endl;
+    cout << "(Thong tin trong dau ngoac vuong [ ] chi la index de truy xuat, khong nam trong ten thu muc)" << endl << endl;
+    Folder_Structure_BFS(NTFS_root_directory_ID, 1);
+
+    
+}
+
+void Choose_File() {
+    int i = 0;
+    int j = 0;
+    cout << "\n" << "---------------------------------------------------------" << "\n";
+    cout << "Nhap ma so file/tap tin nam trong dau ngoac vuong [ ] tren cay thu muc (VD: 3 0): ";
+    cin >> i >> j;
+
+    pair<string, string> u = NTFS_Child_Data[i][j];
+    if (u.first.find(".txt") != string::npos) {
+        cout << "Noi dung file " << u.first << ": " << endl;
+        cout << u.second << endl << endl;
+    }
+    else if (u.first.find(".") == string::npos) {
+        cout << "Thu muc " << u.first << ": " << endl;
+
+        int FolderID = NTFS_Child_List[i][j].first;
+        cout << endl;
+        cout << u.first << endl;
+        Folder_Structure_BFS(FolderID, 1);
+    }
+    else {
+        cout << "Vui long dung phan mem tuong thich de doc noi dung!" << endl;
+    }
+
+}
+
+//void test() {
+//    cout << endl;
+//    for (int i = 0; i < NTFS_Child_Data.size(); i++) {
+//        for (int j = 0; j < NTFS_Child_Data[i].size(); j++)
+//        {
+//            cout << NTFS_Child_Data[i][j].first << " " << NTFS_Child_Data[i][j].second << endl;
+//        }
+//    }
+//    //cout << NTFS_Child_Data[39][3].first << endl; //ok
+//}
 
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------

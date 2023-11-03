@@ -5,9 +5,12 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <map>
+#include <vector>
 #include <iomanip>
 #include <vector>
 using namespace std;
+
 
 //--------------------------------------KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32)------------------------------------------
 
@@ -18,6 +21,7 @@ using namespace std;
 /// <param name="readPoint">: bắt đầu đọc từ byte thứ readPoint của ổ drive</param>
 /// <param name="sector">: biến lưu nội dung sector</param>
 /// <returns></returns>
+
 int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int lenght);
 
 /// <summary>
@@ -60,6 +64,15 @@ void PrintHexa(BYTE sector[], int startIndex, int length);
 /// <returns></returns>
 string HexaToUnicodeUTF16(BYTE sector[], int startIndex, int length);
 
+
+/// <summary>
+/// Hàm nhập vào tên ổ đĩa và kiểm tra ổ đĩa có dùng hệ thống NTFS hay không. Nếu có, trả về true, nếu không (là FAT32), trả về false.
+/// Đồng thời, hàm lưu lại sector đầu tiên của ổ đĩa vào tham số sector
+/// </summary>
+/// <param name="sector">: mảng động đã được cấp phát vùng nhớ 512 byte để lưu sector đầu của ổ đĩa</param>
+/// <returns></returns>
+bool IsNTFS(BYTE* sector);
+
 //--------------------------------------KHU VỰC HÀM CHO NTFS------------------------------------------
 
 /// <summary>
@@ -74,6 +87,7 @@ int MFTEntry_Size(BYTE sector_VBR[]);
 /// </summary>
 /// <param name="sector">mảng chứa dữ liệu của Partition Boot Sector (các byte hexa lưu ở little endian)</param>
 void Read_VBR(BYTE sector[]);
+
 
 //--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
 
@@ -138,3 +152,32 @@ void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, 
 void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32);
 void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1);
 void chooseFileFAT(BootSector_FAT32 fat32, LPCWSTR drive1);
+
+/// <summary>
+/// Hàm để đọc 1 entry (MFT entry).
+/// </summary>
+/// <param name="Start_Address_MFT">Vị trí offset của entry</param>
+/// <returns></returns>
+bool Read_Entry(unsigned long long Start_Address_MFT);
+
+/// <summary>
+/// Hàm để đọc MFT (MFT entry).
+/// </summary>
+/// <param></param>
+/// <returns></returns>
+void Read_MFT();
+
+/// <summary>
+/// Hàm để vẽ cây thư mục
+/// </summary>
+/// <param name="node">Gốc cây thư mục cần vẽ</param>
+/// <param name="level">Cấp của node hiện tại</param>
+/// <returns></returns>
+void Folder_Structure_BFS(long long node, int level);
+
+/// <summary>
+/// Hàm xử lý truy xuất cây thư mục cho NTFS
+/// </summary>
+void Choose_File();
+
+
