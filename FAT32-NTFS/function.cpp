@@ -21,7 +21,7 @@ map<long long,vector<pair<string, string> >>  NTFS_Child_Data; //first: tên fil
 
 //-------------------------------------- BIẾN TOÀN CỤC CHO FAT32 ---------------------------------------------------
 
-
+vector <pair<MAIN_ENTRY, int>> FAT32_EntryList;  //Dung cho truy xuat
 
 
 //-------------------------------------- KHU VỰC HÀM CHUNG (CHO CẢ NTFS VÀ FAT32) ------------------------------------------
@@ -61,6 +61,7 @@ int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int l
     }
 }
 
+
 unsigned long long LittleEndian_HexaToDecimal(BYTE sector[], int startIndex, int length) {
 
     unsigned long long result = 0;
@@ -85,7 +86,13 @@ string ByteArrToString(BYTE sector[], int startIndex, int length)
     string str = "";
     for (int i = 0; i < length; ++i)
     {
-        str += static_cast<char>(sector[i + startIndex]);
+        //str += static_cast<char>(sector[i + startIndex]); 
+            //CAP NHAT de loai bo chen ki tu '\0' va ki tu trong 0xFF
+        char c = static_cast<char>(sector[i + startIndex]);
+        if (c != '\0' && sector[i + startIndex] != 0xFF)
+        {
+            str += c;
+        }
     }
     return str;
 }
@@ -123,6 +130,12 @@ void PrintHexa(BYTE sector[], int startIndex, int length) {
     for (int i = 0; i < length; i++)
     {
         cout << hex << setfill('0') << setw(2) << static_cast<int>(sector[startIndex + i]) << " ";
+        // xuống dòng cho dễ nhìn
+        //------------------------------------------------------------
+       
+        if ((i + 1) % 16 == 0)
+            cout << endl;
+        //----------------------------------------------------------------
     }
     cout << dec << endl;
 }
@@ -413,3 +426,370 @@ void Choose_File() {
 
 
 //------------------------------------- KHU VỰC HÀM CHO FAT32 -------------------------------------------------------
+BootSector_FAT32 read_BootSector(BYTE* bootSector_ptr)
+{
+    BootSector_FAT32 result;
+    result.byte_per_sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0xB, 2);         //offset B (hex) = 11 (dec), chiếm 2 bytes
+    result.Sector_per_Cluster = LittleEndian_HexaToDecimal(bootSector_ptr, 0xD, 1);      //offset D (hex) = 13 (dec), chiếm 1 byte
+    result.Reserved_Sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0xE, 2);         //offset E (hex) = 14 (dec), chiếm 2 byte
+    result.No_FAT = LittleEndian_HexaToDecimal(bootSector_ptr, 0x10, 1);                 //offset 10(hex) = 16 (dec), 1 byte
+    result.RDET_Entries = LittleEndian_HexaToDecimal(bootSector_ptr, 0x11, 2);           //offset 11(hex) = 17(dec), 2 bytes
+    result.Total_Sector = LittleEndian_HexaToDecimal(bootSector_ptr, 0x20, 4);           //offset 20(hex) = 32(dec), 4 bytes
+    result.Sector_per_FAT = LittleEndian_HexaToDecimal(bootSector_ptr, 0x24, 4);         //offset 24(hex) = 36(dec), 4 bytes
+    result.Root = LittleEndian_HexaToDecimal(bootSector_ptr, 0x2C, 4);                   //offset 2C(hex) = 44(dec), 4 bytes
+    return result;
+}
+
+void Print_BootSector(BootSector_FAT32 FAT32)
+{
+    cout << "----------------------------------------BOOTSECTOR----------------------------------------" << endl;
+    cout << "\tFAT32" << endl;
+    cout << "\tSo bytes tren 1 Sector: " << FAT32.byte_per_sector << " (bytes)." << endl;
+    cout << "\tSo sector moi cluster (Sc): " << FAT32.Sector_per_Cluster << "(sectors)." << endl;
+    cout << "\tSo sector cua BootSector (Sb): " << FAT32.Reserved_Sector << "(sectors)." << endl;
+    cout << "\tSo bang FAT (NF): " << FAT32.No_FAT << "(sectors)" << endl;
+    cout << "\tSo Entry cua RDET (SRDET): " << FAT32.RDET_Entries << "(Entries)." << endl;
+    cout << "\tTong so sector (Sv): " << FAT32.Total_Sector << "(sectors)." << endl;
+    cout << "\tSo sector moi bang FAT (SF): " << FAT32.Sector_per_FAT << "(sectors)." << endl;
+    cout << "\tSector bat dau cu RDET: " << FAT32.Root << endl;
+    cout << "------------------------------------------------------------------------------------------" << endl;
+
+}
+
+int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_table_result) {
+    if (FAT_table_result != nullptr) {
+        delete[] FAT_table_result;
+    }
+
+    int Fat_table_size = fat32.byte_per_sector * fat32.Sector_per_FAT;
+    int number_Of_entries = Fat_table_size / 4;
+
+    FAT_table_result = new unsigned int[number_Of_entries];
+    ifstream disk(driver, ios::binary);
+
+    if (!disk) {
+        cout << "Failed to open the disk" << endl;
+        return -1;
+    }
+
+    char* buffer = new char[Fat_table_size];
+    disk.seekg(fat32.Reserved_Sector * fat32.byte_per_sector, ios::beg);
+    disk.read(buffer, Fat_table_size);
+    //disk.close();
+
+    BYTE* readBytes = (BYTE*)buffer;
+
+    //Chuyen chuoi 4 byte little endian sang decimal
+    for (int i = 0; i < number_Of_entries; i++) {
+        FAT_table_result[i] = LittleEndian_HexaToDecimal(readBytes, i * 4, 4);
+    }
+
+    delete[] buffer; 
+
+    return number_Of_entries;
+}
+//------------------------------------- KHU VỰC HÀM CHO CAY THU MUC FAT32 -------------------------------------------------------
+
+int firstSectorIndex_Cluster(int clusterIndex, BootSector_FAT32 fat32) {
+    //Sector dau tien cua DATA (RDET)
+    int dataFirstSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT;
+    return ((clusterIndex - 2) * fat32.Sector_per_Cluster) + dataFirstSector;
+}
+
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32) {
+    //Start cluster = Phan tu FAT
+    //Phan tu FAT bat dau dem tu 0....
+    //int fatOffset = fat32.Reserved_Sector + (startCluster + 1) * fat32.byte_per_sector;
+    //lay so sector dau cua vung data = Sb + Nf * Sf + SRDET
+
+
+    int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
+ 
+    //Sector bat dau cua file do
+    unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (startCluster - fat32.Root); //Tru di 2 sector dau truoc rdet
+    //cout << " " << startSector << " ";
+
+    //So entry trong bang FAT
+    unsigned int fat_table_entries = fat32.byte_per_sector * fat32.Sector_per_FAT / 4;
+    int count = 0;
+    unsigned int curent_Sector = startSector;
+
+    //duyệt từng cluster theo danh sách liên kết 
+    cout << " - Sector: ";
+    
+    while (startCluster != 0x0FFFFFFF)
+    {
+        if (startCluster > fat_table_entries) //Vuot qua gioi han
+            break;
+        cout << "(" << startSector
+            << "-" << startSector + fat32.Sector_per_Cluster - 1 << "); ";
+        
+        startCluster = fatTable[startCluster]; //đọc phần tử thứ 2 để biết nó có phải thư mục không
+        count++;
+        // Calculate the starting sector of the next cluster
+        startSector = dataSector + fat32.Sector_per_Cluster * (startCluster - fat32.Root);
+    } 
+    cout << endl;
+
+}
+
+void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level) {
+    int clusterSizeByte = fat32.byte_per_sector * fat32.Sector_per_Cluster; //Moi sector co 32byte theo fat32
+
+    //Tong entries
+    int entriesCount = clusterSizeByte / 32;
+    char* a = new char[clusterSizeByte];
+    int firstSector = firstSectorIndex_Cluster(clusIndex, fat32);
+    fstream diskStream(driver, std::ios::in);
+
+
+    //Bo qua sector dau - System data
+    diskStream.seekg(firstSector * fat32.byte_per_sector, SEEK_SET);
+
+    //Doc ca cluster
+    diskStream.read(a, clusterSizeByte);
+    BYTE* readBytes = new BYTE[clusterSizeByte];
+    readBytes = (BYTE*)a;
+    
+    //Khoi tao main entry
+    MAIN_ENTRY mainEntry;
+    //delete[] a;
+
+    //Danh cho luu tru ten dai
+    string stackName = "";
+
+    bool hasSubEntry = false;
+
+    int countMainEntry = 0;
+
+    for (int i = firstRecordIndex; i < entriesCount; i++)
+    {
+
+        //cout << "Entry: " << readBytes[32 * i] << endl;
+        // Entry trong
+        if (readBytes[32 * i] == 0x0)
+            break;
+        // Tap tin da bi xoa
+        else if (readBytes[32 * i] == 0xE5) 
+            continue;
+
+        int entryStatus = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0xB, 1);
+
+        //Case entry phu
+        if (entryStatus == 0xF)
+        {
+            //Xu ly ten dai
+            /*Doc tung entry, doc ten tu tren xuong
+            push vo stack name
+            de lat toi entry chinh pop ra -> lay duoc ten file
+            */
+            string tempString = "";
+            string tempName = "";
+            tempString = ByteArrToString(readBytes, 32 * i + 0x1, 10);
+            //Offset 1 - 10 bytes
+            tempName = tempName + tempString;
+            tempString = "";
+
+            //Offset 0xE - 12 bytes
+            tempString = ByteArrToString(readBytes, 32 * i + 0xE, 12);
+            tempName = tempName + tempString;
+            tempString = "";
+            //Offset 1xC - 4 bytes
+            tempString = ByteArrToString(readBytes, 32 * i + 0x1C, 4);
+            tempName = tempName + tempString;
+            tempString = "";
+
+
+            hasSubEntry = true;
+            stackName.insert(0, tempName);
+            tempName = "";
+            //Nhay qua entry tiep theo
+            continue;
+        }
+
+        //Cac loai khac 0xF
+        else {
+            //Neu co subentry
+            if (hasSubEntry) {
+         
+                //Lay 3 ki tu cuoi cung
+                if (entryStatus == 0x20) { //Neu la file
+                    mainEntry.name = stackName.substr(0, stackName.size() - 4);
+                    mainEntry.extensionName = stackName.substr(stackName.size() - 3);
+                }
+                else {
+                    mainEntry.name = stackName;
+
+                    mainEntry.extensionName = "";
+                }
+            
+            } //Khong cos subentry
+            else {
+                mainEntry.name = ByteArrToString(readBytes, 0x0, 8);
+                if (entryStatus == 0x20) { //Neu la file
+                    mainEntry.extensionName = stackName.substr(stackName.size() - 3);
+                }
+                else {
+                    mainEntry.extensionName = "";
+                }
+            }
+            stackName = "";
+            countMainEntry++;
+
+
+            //Decode loai
+            //0 - read only
+            //1 - hidden
+            //2 - system
+            //3 - volable
+            //4 - directory
+            //5 - archive - file
+            //Chuyen hex sang nhi phan, tim vi tri cua bit 1 trong day nhi phan, vi tri = type
+            char statuses[] = {'R', 'H', 'S', 'V', 'D', 'A', '0', '0'};
+          
+
+            //tim vi tri xong xuat ra cai nay
+            string status, statusBin;
+            //Doc byte tai 0xB
+            statusBin = HexaToBinary(entryStatus);
+            for (int i = statusBin.size() - 1; i >= 0; i--)
+            {
+                if (statusBin[i] == '1') {
+                    int temp = statusBin.size() - 1 - i;
+                    status += statuses[temp];
+                  
+                }
+            }
+
+            //Gan gia tri cua 
+            mainEntry.attribute = status;
+            mainEntry.attributeInHex = entryStatus;
+
+            //2 byte cao + 2 byte thap
+            int startClusterHigh = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x14, 2);
+            int startClusterLow = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1A, 2);
+
+            mainEntry.startCluster = startClusterHigh + startClusterLow;
+            mainEntry.fileSize = LittleEndian_HexaToDecimal(readBytes, 32 * i + 0x1C, 4);
+
+
+
+        }
+     
+       
+        FAT32_EntryList.push_back(make_pair(mainEntry, FAT32_EntryList.size()));
+        cout << "[" << FAT32_EntryList.size() - 1 << "] ";
+        for (int i = 0; i < level; i++)
+        {
+            
+            if (i == level - 1)
+            {
+                cout << "|__";
+
+            }
+            else {
+                cout << "|  ";
+            }
+            
+            
+        }
+       
+        cout << mainEntry.name << " - " << mainEntry.attribute << " - " << mainEntry.fileSize << " bytes";
+        allocatedSectors(mainEntry.startCluster, FatTable, fat32);
+
+        //La thu muc
+        if (entryStatus == 0x10) {
+
+            //Goi ham de quy xuong thu muc con
+            readDirectory(2, mainEntry.startCluster, FatTable, fat32, driver, level + 1);
+        }
+
+ 
+
+    }
+
+}
+
+void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1)
+{
+     ////----------------------------------------- là tập tin----------------
+    bool viewable = false;
+
+    if (entry.attributeInHex == 0x20)
+    {
+        if (entry.extensionName == "txt" || entry.extensionName == "TXT")// file text
+        {
+               
+            cout << ">> Noi dung file: " << endl;
+            cout << "...Dang doc file" << endl;
+            viewable = true;
+        }
+        else// file khác
+        {
+           
+            cout << ">> Vui long cho trinh duyet phu hop de doc noi dung file" << endl;
+            return;
+        }
+    }
+    else {
+        cout << ">> Vui long chon file phu hop" << endl;
+
+    }
+        ////-----------------------------------------------------------------------------
+    if (viewable) {
+        string content;
+        unsigned int* Fat_table = NULL;
+        unsigned int FAT_size = read_FAT_table(drive1, fat32, Fat_table);
+
+        int bytes_per_Cluster = fat32.byte_per_sector * fat32.Sector_per_Cluster;
+        //BYTE* buffer = new BYTE[bytes_per_Cluster];
+        BYTE* buffer = new BYTE[fat32.byte_per_sector];
+
+        do
+        {
+            long long data_offset = firstSectorIndex_Cluster(clusIndex, fat32) * fat32.byte_per_sector;
+
+
+            int dataSector = fat32.Reserved_Sector + fat32.No_FAT * fat32.Sector_per_FAT + fat32.RDET_Entries;
+
+            //Sector bat dau cua file do
+            unsigned int startSector = dataSector + fat32.Sector_per_Cluster * (clusIndex - fat32.Root); //Tru di 2 sector dau truoc rdet
+            for (int i = 0; i < fat32.Sector_per_Cluster; i++)
+            {
+                ReadSector(drive1, (startSector + i) * fat32.byte_per_sector, buffer, fat32.byte_per_sector);
+                content += ByteArrToString(buffer, 0, fat32.byte_per_sector);
+
+            }
+
+
+
+            //cout << buffer;
+            if (FAT_size > clusIndex)
+                clusIndex = Fat_table[clusIndex];
+            else
+                break;
+        } while (clusIndex != 0x0FFFFFFF);
+        if (content.empty())
+            cout << "File rong." << endl;
+        else
+            cout << content << endl;
+
+        //giải phóng vùng nhớ.
+        delete[]buffer;
+    }
+    
+}
+
+
+
+void chooseFileFAT(BootSector_FAT32 fat32, LPCWSTR drive1) {
+    int choice = 0;
+    cout << ">> Chon file muon truy xuat [0, 1...]: ";
+    cin >> choice;
+
+    readContentOfFile(FAT32_EntryList[choice].first, fat32, FAT32_EntryList[choice].first.startCluster, drive1);
+
+
+}
+
+

@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <iomanip>
+#include <vector>
 using namespace std;
 
 
@@ -20,7 +21,8 @@ using namespace std;
 /// <param name="readPoint">: bắt đầu đọc từ byte thứ readPoint của ổ drive</param>
 /// <param name="sector">: biến lưu nội dung sector</param>
 /// <returns></returns>
-int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int length);
+
+int ReadSector(LPCWSTR  drive, unsigned long long readPoint, BYTE* sector, int lenght);
 
 /// <summary>
 /// Hàm để chuyển 1 mảng con hexa (lưu ở little endian) sang decimal
@@ -86,6 +88,71 @@ int MFTEntry_Size(BYTE sector_VBR[]);
 /// <param name="sector">mảng chứa dữ liệu của Partition Boot Sector (các byte hexa lưu ở little endian)</param>
 void Read_VBR(BYTE sector[]);
 
+
+//--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
+
+/// <summary>
+/// Struct Bootsector chứa các thông số quan trọng, ở đây chỉ lấy 8 thuộc tính chứa các thông số cần thiết 
+/// </summary>
+struct BootSector_FAT32
+{
+	int byte_per_sector;	//	Số byte của 1 sector						(offset B - chiếm 2 bytes)
+	int Sector_per_Cluster;	//	Số Sector của 1 Cluster				[Sc]	(offset D - chiếm 1 byte)
+	int Reserved_Sector;	//	Số sector của BootSector			[SB]	(offset E - chiếm 2 bytes)
+	int No_FAT;				//	Số bảng FAT							[NF]	(offset 10 - 1 byte)
+	int RDET_Entries;		//	Số Entrys của RDET, thường = 0		[SRDET]	(offset 11 - 2 bytes)
+	long Total_Sector;		//	Tổng số sector (kích thức Volume)	[Sv]	(offset 20 - 4 bytes)
+	int Sector_per_FAT;		//	Số sector mỗi bảng FAT				[Sf]	(offset 24 - 4 bytes)
+	int Root;				//	Cluster bắt đầu của RDET					(offset 2C - 4 bytes) 
+};
+
+/// <summary>
+/// Hàm để đọc một BootSector và lưu vào struct FAT32
+/// </summary>
+/// <param name = bootSector_ptr>: con trỏ chứa địa chỉ bootSector</param>
+/// /// <returns = results> Kết quả đọc được từ BootSector_ptr</returns>
+BootSector_FAT32 read_BootSector(BYTE* bootSector_ptr);
+
+
+/// <summary>
+/// Hàm in các thông số đáng chú ý của bootSector vừa đọc được từ hàm read_BootSector
+/// </summary>
+/// <param name="FAT32">Chứa thông tin của bootsector</param>
+void Print_BootSector(BootSector_FAT32 FAT32);
+
+/// <summary>
+/// Hàm đọc 2 Bảng FAT
+/// </summary>
+/// <param name="drive">Tên Volume</param>
+/// <param name="fat32">Các thông số của bootsector đã đọc</param>
+/// <param name="FAT_table_result">Biến con trỏ lưu mảng kết quả của hàm này</param>
+int read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, unsigned int*& FAT_table_result);
+
+
+//void read_FAT_table(LPCWSTR driver, BootSector_FAT32 fat32, BYTE* FAT_table_result);
+
+
+//void initFAT(int*& FAT, BootSector_FAT32 fat32, LPCWSTR drive1);
+
+// Cau truc DIRECTORY
+struct MAIN_ENTRY {
+	string name;					// Tên thư mục/tập tin
+	string extensionName;           // Ten duoi tap tin
+	string attribute;			    // Thuộc tính 
+	int attributeInHex;				//Thuoc tinh duoi dang hexa
+	unsigned int startCluster;      // Cluster bắt đầu
+	unsigned int fileSize;          // Kích cỡ (tính theo byte)
+	//DIRECTORY* next;				// Trỏ đến thư mục/ tập tin tiếp theo
+	//DIRECTORY* dir;				// Trỏ đến thư mục con
+};
+
+int firstSectorIndex_Cluster(int clusIndex, BootSector_FAT32 fat32);
+
+void readDirectory(int firstRecordIndex, int clusIndex, unsigned int* FatTable, BootSector_FAT32 fat32, LPCWSTR driver, int level);
+void allocatedSectors(unsigned int startCluster, unsigned int* fatTable, BootSector_FAT32 fat32);
+void readContentOfFile(MAIN_ENTRY entry, BootSector_FAT32 fat32, unsigned int clusIndex, LPCWSTR drive1);
+void chooseFileFAT(BootSector_FAT32 fat32, LPCWSTR drive1);
+
 /// <summary>
 /// Hàm để đọc 1 entry (MFT entry).
 /// </summary>
@@ -113,4 +180,4 @@ void Folder_Structure_BFS(long long node, int level);
 /// </summary>
 void Choose_File();
 
-//--------------------------------------KHU VỰC HÀM CHO FAT32------------------------------------------
+
